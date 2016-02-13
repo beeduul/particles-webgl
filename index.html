@@ -28,13 +28,13 @@
   uniform vec2 uResolution;
   uniform sampler2D uTexture0; // pos, t
   uniform int uDeltaTime;
-  
+
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
 
     vec4 quartet = texture2D(uTexture0, uv);
     vec3 pos = quartet.rgb + vec3(0.001, 0.0, 0.0);
-    float t = quartet.a;
+    float t = quartet.a - 0.01;
 
     gl_FragData[0] = vec4(pos, t);
   }
@@ -80,7 +80,13 @@
 
   void main() {
     // gl_FragColor = uColor;
-    vec3 simColor = texture2D(uTexture0, vUV).rgb;
+    vec4 particle = texture2D(uTexture0, vUV);
+    
+    float t = particle.a;
+    vec3 simColor = uColor.rgb * t;
+    if (t <= 0.0) {
+      discard;
+    }
     gl_FragColor = vec4(simColor, 1.0);
   }
   </script>
@@ -242,6 +248,10 @@
         this.event = event;
       }.bind(this));
 
+      canvas.addEventListener("mousemove", function(event) {
+        this.event = event;
+      }.bind(this));
+
       (function(self) {
         window.addEventListener(
           'resize', function() {self.onWindowResize();}, false
@@ -274,10 +284,28 @@
         console.log(this.event);
         // download particle data from previous buffer
         
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.previous.frame_buffer);
-        var buffer = Float32(SIMULATION_DIM * SIMULATION_DIM * 4);
-        gl.readPixels(0, 0, SIMULATION_DIM, SIMULATION_DIM, gl.RGBA, gl.FLOAT, buffer);
+        var w, h; w = h = SIMULATION_DIM;
         
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.previous.frame_buffer);
+        var buffer = new Float32Array(w * h * 4);
+        gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, buffer);
+        
+        var num_particles = this.simulation.num_particles;
+        
+        var base_index = num_particles * 4;
+        buffer[base_index + 0] = (this.event.x / this.width) * 2.0 - 1.0;
+        buffer[base_index + 1] = (this.event.y / this.height) * -2.0 + 1.0;
+        buffer[base_index + 2] = 0.0;
+        buffer[base_index + 3] = 1.0; // time, not really
+
+        var tx = this.simulation.previous.textures[0];
+        gl.bindTexture(gl.TEXTURE_2D, tx);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, buffer);
+
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        
+        this.simulation.num_particles += 1;
         
         // add new particle data at buffer_length + 1, with mouse position and other particle attributes
         // reset texture with particle data
@@ -316,10 +344,10 @@
           for (var y = 0; y < h; ++y) {
             for (var x = 0; x < w; ++x) {
               var idx_base = (y * w + x) * 4;
-              src_buffer[idx_base + 0] = x / w; // x
-              src_buffer[idx_base + 1] = y / h; // y
+              src_buffer[idx_base + 0] = 0.0; // x
+              src_buffer[idx_base + 1] = 0.0; // y
               src_buffer[idx_base + 2] = 0.0; // z
-              src_buffer[idx_base + 3] = 1.0; // time
+              src_buffer[idx_base + 3] = 0.0; // time
             }
           }
           

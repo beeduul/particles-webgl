@@ -1,6 +1,6 @@
 "use strict";
 
-var NUM_TEXTURES = 1;
+var NUM_TEXTURES = 2;
 var SIMULATION_DIM = 100;
 
 var Graphics = {
@@ -26,8 +26,9 @@ var Graphics = {
         aUV: {},
       },
       uniforms: {
-        uColor:       { value: [1.0, 1.0, 1.0, 1.0] }, // [1.0, 0.3, 0.1, 0.5] },
+        uColor:       { value: [1.0, 0.3, 0.1, 0.5] },
         uTexture0:    { value: null },
+        uTexture1:    { value: null },
       }
     },
     particle_sim: {
@@ -37,6 +38,7 @@ var Graphics = {
       uniforms: {
         uResolution: { value: [SIMULATION_DIM, SIMULATION_DIM] },
         uTexture0:   { value: null },
+        uTexture1:   { value: null },
         uDeltaTime:  { value: null }
       }
     }
@@ -193,22 +195,41 @@ var Graphics = {
       var gl = this.gl;
       
       var w, h; w = h = SIMULATION_DIM;
+      var buffer = new Float32Array(w * h * 4);
       
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.previous.frame_buffer);
-      var buffer = new Float32Array(w * h * 4);
-      gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, buffer);
-      
-      var num_particles = this.simulation.num_particles;
-      
-      var base_index = num_particles * 4;
-      buffer[base_index + 0] = (this.event.x / this.width) * 2.0 - 1.0;
-      buffer[base_index + 1] = (this.event.y / this.height) * -2.0 + 1.0;
-      buffer[base_index + 2] = 0.0;
-      buffer[base_index + 3] = 1.0; // time, not really
 
-      var tx = this.simulation.previous.textures[0];
-      gl.bindTexture(gl.TEXTURE_2D, tx);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, buffer);
+      var num_particles = this.simulation.num_particles;
+    
+      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+        var tx = this.simulation.previous.textures[tx_idx];
+
+        // gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + tx_idx, gl.TEXTURE_2D, tx, 0);
+
+        gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, buffer);
+      
+        var base_index = num_particles * 4;
+
+        switch(tx_idx) {
+        case 0:
+          // x, y, ?, size
+          buffer[base_index + 0] = (this.event.x / this.width) * 2.0 - 1.0;
+          buffer[base_index + 1] = (this.event.y / this.height) * -2.0 + 1.0;
+          buffer[base_index + 2] = 0.0;
+          buffer[base_index + 3] = 10.0; // time, not really
+          break;
+        case 1:
+          // r, g, b, a
+          buffer[base_index + 0] = 1.0; // (this.event.x / this.width);
+          buffer[base_index + 1] = 1.0; // (this.event.y / this.height);
+          buffer[base_index + 2] = 0.0;
+          buffer[base_index + 3] = 1.0;
+          break;
+        }
+
+        gl.bindTexture(gl.TEXTURE_2D, tx);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, buffer);
+      }
 
       gl.bindTexture(gl.TEXTURE_2D, null);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -319,10 +340,16 @@ var Graphics = {
       gl.FLOAT, false, 0, 0);  // type, normalized, stride, offset
 
     // update shader uniforms
+
+    // TODO make loop
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[0]); // necessary?
     gl.uniform1i(shader.uniforms.uTexture0.location, this.simulation.previous.textures[0]);
 
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[1]); // necessary?
+    gl.uniform1i(shader.uniforms.uTexture1.location, this.simulation.previous.textures[1]);
+    
     gl.uniform2f(shader.uniforms.uResolution.location,
       shader.uniforms.uResolution.value[0],
       shader.uniforms.uResolution.value[1]
@@ -362,9 +389,14 @@ var Graphics = {
       this.shaders.particle.attributes.aUV.location,
       this.vertexBuffers.particleUV.size, gl.FLOAT, false, 0, 0);      
 
+    // TODO make loop
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.simulation.current.textures[0]);
     gl.uniform1i(this.shaders.particle.uniforms.uTexture0.location, this.simulation.current.textures[0]);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.simulation.current.textures[1]);
+    gl.uniform1i(this.shaders.particle.uniforms.uTexture1.location, this.simulation.current.textures[1]);
 
     gl.drawArrays(gl.POINTS, 0, this.vertexBuffers.particleUV.count);
     

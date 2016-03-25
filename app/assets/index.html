@@ -26,7 +26,8 @@
 
   precision mediump float;
   uniform vec2 uResolution;
-  uniform sampler2D uTexture0; // pos, t
+  uniform sampler2D uTexture0; // x, y, ?, t
+  uniform sampler2D uTexture1; // r, g, b, a
   uniform int uDeltaTime;
 
   void main() {
@@ -45,7 +46,8 @@
   attribute vec2 aUV;
   varying vec3 vPosition;
   varying vec2 vUV;
-  uniform sampler2D uTexture0;
+  uniform sampler2D uTexture0; // x, y, ?, t
+  uniform sampler2D uTexture1; // r, g, b, a
   
   vec2 uvToScreen(vec2 uv) {
     return uv * 2.0 - vec2(1.0, 1.0);
@@ -75,12 +77,15 @@
   varying vec3 vPosition;
   varying vec2 vUV;
   
-  uniform sampler2D uTexture0;
+  uniform sampler2D uTexture0; // x, y, ?, t
+  uniform sampler2D uTexture1; // r, g, b, a
   uniform vec4 uColor;
 
   void main() {
     // gl_FragColor = uColor;
     vec4 particle = texture2D(uTexture0, vUV);
+    
+    vec4 color = texture2D(uTexture1, vUV);
     
     float t = particle.a;
     vec3 simColor = uColor.rgb * t;

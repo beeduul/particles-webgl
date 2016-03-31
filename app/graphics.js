@@ -26,7 +26,6 @@ var Graphics = {
         aUV: {},
       },
       uniforms: {
-        uColor:       { value: [1.0, 0.3, 0.1, 0.5] },
         uTexture0:    { value: null },
         uTexture1:    { value: null },
       }
@@ -39,30 +38,11 @@ var Graphics = {
         uResolution: { value: [SIMULATION_DIM, SIMULATION_DIM] },
         uTexture0:   { value: null },
         uTexture1:   { value: null },
-        uDeltaTime:  { value: null }
       }
     }
   },
   
   vertexBuffers: {
-    // particlePos: {
-    //   size: 3,
-    //   count: 3,
-    //   data: new Float32Array([
-    //     0.0,  1.0,  0.0,
-    //    -1.0, -1.0,  0.0,
-    //     1.0, -1.0,  0.0
-    //   ])
-    // },
-    // particleCol: {
-    //   size: 4,
-    //   count: 3,
-    //   data: new Float32Array([
-    //     1.0, 1.0, 1.0, 1.0,
-    //     1.0, 1.0, 1.0, 1.0,
-    //     1.0, 1.0, 1.0, 0.0
-    //   ])
-    // },
     particleUV: {
       size: 2,
       count: 3,

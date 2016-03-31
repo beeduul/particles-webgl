@@ -23,12 +23,11 @@
   
   <script id="particle_sim_fs" type="x-shader/x-fragment">
   #extension GL_EXT_draw_buffers : require
-
   precision mediump float;
+  
   uniform vec2 uResolution;
   uniform sampler2D uTexture0; // x, y, ?, t
   uniform sampler2D uTexture1; // r, g, b, a
-  uniform int uDeltaTime;
 
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;

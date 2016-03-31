@@ -170,42 +170,59 @@ var Graphics = {
   update: function(delta_time) {
     
     if (this.event) {
-      console.log(this.event);
+      // console.log(this.event);
       // download particle data from previous buffer
       var gl = this.gl;
       
       var w, h; w = h = SIMULATION_DIM;
       var buffer = new Float32Array(w * h * 4);
       
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.previous.frame_buffer);
+      // gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.previous.frame_buffer);
 
       var num_particles = this.simulation.num_particles;
     
       for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
         var tx = this.simulation.previous.textures[tx_idx];
+        var aux_fb = this.simulation.previous.aux_frame_buffers[tx_idx];
+        
+        gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
 
-        // gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + tx_idx, gl.TEXTURE_2D, tx, 0);
+        // should only be required on init, not update
+        // var draw_buffers_ext = this.webgl_extensions.draw_buffers_ext;
+        // gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL, gl.TEXTURE_2D, tx, 0);
 
         gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, buffer);
-      
+
         var base_index = num_particles * 4;
 
         switch(tx_idx) {
         case 0:
-          // x, y, ?, size
+          // particle position - x, y, z, ttl
           buffer[base_index + 0] = (this.event.x / this.width) * 2.0 - 1.0;
           buffer[base_index + 1] = (this.event.y / this.height) * -2.0 + 1.0;
           buffer[base_index + 2] = 0.0;
-          buffer[base_index + 3] = 10.0; // time, not really
+          buffer[base_index + 3] = 10.0;
           break;
         case 1:
-          // r, g, b, a
-          buffer[base_index + 0] = 1.0; // (this.event.x / this.width);
-          buffer[base_index + 1] = 1.0; // (this.event.y / this.height);
-          buffer[base_index + 2] = 0.0;
+          // particle color - r, g, b, a
+          buffer[base_index + 0] = 0.5; // (this.event.x / this.width);
+          buffer[base_index + 1] = 0.5; // (this.event.y / this.height);
+          buffer[base_index + 2] = 0.5;
           buffer[base_index + 3] = 1.0;
           break;
+
+        // NOT YET IMPLEMENTED
+        case 2:
+          // particle size
+          buffer[base_index + 0] = (this.event.y / this.height) * 10.0; // size
         }
+
+        var n = 8;
+        var shortbuf = new Float32Array(n);
+        for (var i = 0; i < n; i += 1) {
+          shortbuf[i] = buffer[i];
+        }
+        console.log("p: ", num_particles, " tex: ", tx_idx, shortbuf);
 
         gl.bindTexture(gl.TEXTURE_2D, tx);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, buffer);
@@ -215,6 +232,9 @@ var Graphics = {
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       
       this.simulation.num_particles += 1;
+      if (this.simulation.num_particles > w * h) {
+        this.simulation.num_particles = 0;
+      }
       
       // add new particle data at buffer_length + 1, with mouse position and other particle attributes
       // reset texture with particle data
@@ -222,7 +242,13 @@ var Graphics = {
     }
     
     this.simulate(delta_time);
+    
     this.draw();
+
+    // swap simulation buffers
+    this.simulation.swapBuffers();
+    
+
   },
   
   initSimulationBuffers: function() {
@@ -236,15 +262,15 @@ var Graphics = {
         throw("simulation already initialized");
       }
       
+      console.log("Configuring " + (!this.simulation.current ? "current" : "efe") + " simulation_buffer");
+      
       var state = {
         frame_buffer: gl.createFramebuffer(),
+        aux_frame_buffers: [],
         textures: []
       }
 
-      gl.bindFramebuffer(gl.FRAMEBUFFER, state.frame_buffer);
-
       for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-        
         var tx = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, tx);
         var w, h; w = h = SIMULATION_DIM;
@@ -259,39 +285,68 @@ var Graphics = {
             src_buffer[idx_base + 3] = 0.0; // time
           }
         }
-        
+
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, src_buffer);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.bindTexture(gl.TEXTURE_2D, null);
-
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + tx_idx, gl.TEXTURE_2D, tx, 0);
-
-        state.textures.push(tx);
+        src_buffer = undefined;
+        
+        console.log("Created Texture " + tx_idx);
+        state.textures[tx_idx] = (tx);
       }
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, state.frame_buffer);
+      var color_attachments = [];
+      for (var color_attachment_idx = 0; color_attachment_idx < NUM_TEXTURES; color_attachment_idx++) {
+        color_attachments[color_attachment_idx] = (draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + color_attachment_idx); // gl_FragData[color_attachment_idx]
+      }
+      this.simulation.color_attachments = color_attachments;
+      
+      console.log("color_attachments: ", color_attachments);
+
+      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+        var tx = state.textures[tx_idx];
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, color_attachments[tx_idx], gl.TEXTURE_2D, tx, 0);
+        console.log("framebufferTexture2D for color_attachment", color_attachments[tx_idx], ", tx: ", tx);
+      }
+
+      // attach textures to gl_FragData[] outputs
+      draw_buffers_ext.drawBuffersWEBGL(this.simulation.color_attachments);
 
       if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-        console.log("Can't use framebuffer.");
+        console.error("Can't use main framebuffer.");
         // See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
       }
-
       if (!gl.isFramebuffer(state.frame_buffer)) {
         console.error("Frame buffer failed");
       }
+      
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      
+      
+      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+        var tx = state.textures[tx_idx];
+        var aux_fb = gl.createFramebuffer();
+        state.aux_frame_buffers[tx_idx] = aux_fb;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL, gl.TEXTURE_2D, tx, 0);
+
+        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+          console.error("Can't use aux_fb " + tx_idx);
+          // See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
+        }
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      }
+
 
       if (this.simulation.current) {
         this.simulation.previous = state;
       } else {
         this.simulation.current = state;
       }
-
-      var color_attachments = []
-      for (var color_attachment_idx = 0; color_attachment_idx < NUM_TEXTURES; color_attachment_idx++) {
-        color_attachments.push(draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + color_attachment_idx); // // gl_FragData[i]
-      }
-      draw_buffers_ext.drawBuffersWEBGL(color_attachments);      
 
     }
     
@@ -300,15 +355,18 @@ var Graphics = {
   simulate: function(delta_time) {
     
     var gl = this.gl;
-    var fbo = this.simulation.current.frame_buffer;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+
+    // write the output of the simulation to the current framebuffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.current.frame_buffer);
+
+    var draw_buffers_ext = gl.getExtension("WEBGL_draw_buffers");
+    draw_buffers_ext.drawBuffersWEBGL(this.simulation.color_attachments);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.blendFunc(gl.ONE, gl.ZERO);  // so alpha output color draws correctly
     // make sure no DEPTH_TEST
 
     var shader = this.shaders.particle_sim;
-    
     gl.useProgram(shader.program);
 
     // send vertex information to GPU
@@ -322,20 +380,20 @@ var Graphics = {
     // update shader uniforms
 
     // TODO make loop
+      
+    // enable texture samplers in shader
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[0]); // necessary?
+    // gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[0]); // necessary?
     gl.uniform1i(shader.uniforms.uTexture0.location, this.simulation.previous.textures[0]);
 
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[1]); // necessary?
+    // gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[1]); // necessary?
     gl.uniform1i(shader.uniforms.uTexture1.location, this.simulation.previous.textures[1]);
     
     gl.uniform2f(shader.uniforms.uResolution.location,
       shader.uniforms.uResolution.value[0],
       shader.uniforms.uResolution.value[1]
     );
-
-    gl.uniform1i(shader.uniforms.uDeltaTime.location, delta_time);
 
     // 'draw' the simulation
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffers.fullScreenQuadPos.count);
@@ -344,9 +402,6 @@ var Graphics = {
     gl.disableVertexAttribArray(shader.attributes.aPosition.location);
     gl.useProgram(null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    // swap simulation buffers
-    this.simulation.swapBuffers();
   },
   
   draw: function() {
@@ -356,33 +411,30 @@ var Graphics = {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);   // additive blending
     
-    gl.useProgram(this.shaders.particle.program);
-
-    // set uniform
-    var uColor = this.shaders.particle.uniforms.uColor;
-    gl.uniform4f(uColor.location, uColor.value[0], uColor.value[1], uColor.value[2], uColor.value[3]);
+    var shader = this.shaders.particle;
+    gl.useProgram(shader.program);
 
     // bind the particleUV vertex buffer to GPU
-    gl.enableVertexAttribArray(this.shaders.particle.attributes.aUV.location);
+    gl.enableVertexAttribArray(shader.attributes.aUV.location);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffers.particleUV.buffer);
     gl.vertexAttribPointer(
-      this.shaders.particle.attributes.aUV.location,
+      shader.attributes.aUV.location,
       this.vertexBuffers.particleUV.size, gl.FLOAT, false, 0, 0);      
 
     // TODO make loop
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.simulation.current.textures[0]);
-    gl.uniform1i(this.shaders.particle.uniforms.uTexture0.location, this.simulation.current.textures[0]);
+    gl.uniform1i(shader.uniforms.uTexture0.location, this.simulation.current.textures[0]);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.simulation.current.textures[1]);
-    gl.uniform1i(this.shaders.particle.uniforms.uTexture1.location, this.simulation.current.textures[1]);
+    gl.uniform1i(shader.uniforms.uTexture1.location, this.simulation.current.textures[1]);
 
     gl.drawArrays(gl.POINTS, 0, this.vertexBuffers.particleUV.count);
     
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.disableVertexAttribArray(this.shaders.particle.attributes.aUV.location);
+    gl.disableVertexAttribArray(shader.attributes.aUV.location);
     gl.useProgram(null);
   },
 

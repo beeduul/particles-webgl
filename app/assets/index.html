@@ -34,7 +34,7 @@
 
     vec4 pdata_pos = texture2D(uTexture0, uv);
     vec4 pdata_color = texture2D(uTexture1, uv);
-    vec3 pos = pdata_pos.xyz + vec3(0.001, 0.0, 0.0);
+    vec3 pos = pdata_pos.xyz + vec3(0.001 * (pdata_pos.w - 5.0), 0.0, 0.0);
     float ttl = pdata_pos.w - 0.01;
 
     gl_FragData[0] = vec4(pos, ttl);

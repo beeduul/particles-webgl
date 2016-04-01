@@ -205,8 +205,8 @@ var Graphics = {
           break;
         case 1:
           // particle color - r, g, b, a
-          buffer[base_index + 0] = 0.5; // (this.event.x / this.width);
-          buffer[base_index + 1] = 0.5; // (this.event.y / this.height);
+          buffer[base_index + 0] = (this.event.x / this.width);
+          buffer[base_index + 1] = (this.event.y / this.height);
           buffer[base_index + 2] = 0.5;
           buffer[base_index + 3] = 1.0;
           break;

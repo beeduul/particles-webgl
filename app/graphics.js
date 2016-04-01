@@ -224,6 +224,7 @@ var Graphics = {
         }
         console.log("p: ", num_particles, " tex: ", tx_idx, shortbuf);
 
+        gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, tx);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, buffer);
       }
@@ -272,6 +273,7 @@ var Graphics = {
 
       for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
         var tx = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, tx);
         var w, h; w = h = SIMULATION_DIM;
         
@@ -291,6 +293,7 @@ var Graphics = {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
         gl.bindTexture(gl.TEXTURE_2D, null);
         src_buffer = undefined;
         
@@ -383,12 +386,12 @@ var Graphics = {
       
     // enable texture samplers in shader
     gl.activeTexture(gl.TEXTURE0);
-    // gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[0]); // necessary?
-    gl.uniform1i(shader.uniforms.uTexture0.location, this.simulation.previous.textures[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[0]); // necessary?
+    gl.uniform1i(shader.uniforms.uTexture0.location, 0); // this.simulation.previous.textures[0]);
 
     gl.activeTexture(gl.TEXTURE1);
-    // gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[1]); // necessary?
-    gl.uniform1i(shader.uniforms.uTexture1.location, this.simulation.previous.textures[1]);
+    gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[1]); // necessary?
+    gl.uniform1i(shader.uniforms.uTexture1.location, 1); // this.simulation.previous.textures[1]);
     
     gl.uniform2f(shader.uniforms.uResolution.location,
       shader.uniforms.uResolution.value[0],
@@ -424,15 +427,15 @@ var Graphics = {
     // TODO make loop
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.simulation.current.textures[0]);
-    gl.uniform1i(shader.uniforms.uTexture0.location, this.simulation.current.textures[0]);
+    gl.uniform1i(shader.uniforms.uTexture0.location, 0); // this.simulation.current.textures[0]);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.simulation.current.textures[1]);
-    gl.uniform1i(shader.uniforms.uTexture1.location, this.simulation.current.textures[1]);
+    gl.uniform1i(shader.uniforms.uTexture1.location, 1); // this.simulation.current.textures[1]);
 
     gl.drawArrays(gl.POINTS, 0, this.vertexBuffers.particleUV.count);
     
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    // gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.disableVertexAttribArray(shader.attributes.aUV.location);
     gl.useProgram(null);

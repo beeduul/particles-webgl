@@ -85,8 +85,7 @@
     if (t <= 0.0) {
       discard;
     }
-    vec3 simColor = pdata_color.rgb * t;
-    gl_FragColor = vec4(simColor, 1.0);
+    gl_FragColor = vec4(pdata_color.rgb, t);
   }
   </script>
   

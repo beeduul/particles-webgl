@@ -168,8 +168,10 @@ var Graphics = {
 
   update: function(delta_time) {
     
-    if (this.event) {
-      // console.log(this.event);
+    if (this.event && 
+      this.event.buttons == 1 &&
+      this.event.type == "mousemove")
+    {
       // download particle data from previous buffer
       var gl = this.gl;
       
@@ -247,8 +249,6 @@ var Graphics = {
 
     // swap simulation buffers
     this.simulation.swapBuffers();
-    
-
   },
   
   initSimulationBuffers: function() {

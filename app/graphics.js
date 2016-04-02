@@ -1,7 +1,7 @@
 "use strict";
 
 var NUM_TEXTURES = 2;
-var SIMULATION_DIM = 100;
+var SIMULATION_DIM = 128;
 
 var Graphics = {
 
@@ -67,7 +67,6 @@ var Graphics = {
   },
   
   simulation: {
-    SIMULATION_DIM: 100,
     current: undefined,
     previous: undefined,
     num_particles: 0,
@@ -86,8 +85,8 @@ var Graphics = {
   },
 
   generateParticleVertexData: function() {
-    var width = this.simulation.SIMULATION_DIM;
-    var height = this.simulation.SIMULATION_DIM;
+    var width = SIMULATION_DIM;
+    var height = SIMULATION_DIM;
 
     this.vertexBuffers.particleUV.size = 2;
     this.vertexBuffers.particleUV.count = width * height;

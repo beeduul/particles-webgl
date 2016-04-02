@@ -361,7 +361,7 @@ var Graphics = {
     // write the output of the simulation to the current framebuffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.current.frame_buffer);
 
-    var draw_buffers_ext = gl.getExtension("WEBGL_draw_buffers");
+    var draw_buffers_ext = this.webgl_extensions.draw_buffers_ext;
     draw_buffers_ext.drawBuffersWEBGL(this.simulation.color_attachments);
 
     gl.clear(gl.COLOR_BUFFER_BIT);

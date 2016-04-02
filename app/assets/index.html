@@ -59,7 +59,7 @@
     v3xyz = pdata_pos.xyz;
     float ttl = pdata_pos.w;
     
-    gl_PointSize = ttl;
+    gl_PointSize = ttl * 5.0;
     gl_Position = vec4(v3xyz, 1.0);
     
     vUV = aUV;
@@ -85,7 +85,7 @@
     if (t <= 0.0) {
       discard;
     }
-    gl_FragColor = vec4(pdata_color.rgb, t);
+    gl_FragColor = vec4(pdata_color.rgb, t / 10.0);
   }
   </script>
   

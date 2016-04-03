@@ -1,7 +1,7 @@
 "use strict";
 
-var NUM_TEXTURES = 2;
-var SIMULATION_DIM = 128;
+var NUM_TEXTURES = 4;
+var SIMULATION_DIM = 100;
 
 var Graphics = {
 
@@ -28,6 +28,8 @@ var Graphics = {
       uniforms: {
         uTexture0:    { value: null },
         uTexture1:    { value: null },
+        uTexture2:    { value: null },
+        uTexture3:    { value: null },
       }
     },
     particle_sim: {
@@ -38,6 +40,11 @@ var Graphics = {
         uResolution: { value: [SIMULATION_DIM, SIMULATION_DIM] },
         uTexture0:   { value: null },
         uTexture1:   { value: null },
+        uTexture2:   { value: null },
+        uTexture3:    { value: null },
+        gravityLoc:  { value: [0,0,0] },
+        gravityPower: { value: 1000.0 },
+        friction:    { value: 0.999 }
       }
     }
   },
@@ -130,6 +137,8 @@ var Graphics = {
     this.canvas = canvas;
     this.onWindowResize();
 
+    this.lastEvent = null;
+
     canvas.addEventListener("mousedown", function(event) {
       this.handleMouseEvent(event);
     }.bind(this));
@@ -216,17 +225,28 @@ var Graphics = {
         shortBuf[3] = 10.0;
         break;
       case 1:
-        // particle color - r, g, b, a
+        // particle color:  r, g, b, a
         shortBuf[0] = (event.x / this.width);
         shortBuf[1] = (event.y / this.height);
         shortBuf[2] = 0.5;
         shortBuf[3] = 1.0;
         break;
 
-      // NOT YET IMPLEMENTED
       case 2:
-        // particle size
-        shortBuf[0] = (event.y / this.height) * 10.0; // size
+        // dx, dy, dz, sz (particle size)
+        var dx = 0;
+        var dy = 0;
+        var dz = 0;
+        if (this.lastEvent) {
+          dx = (event.x - this.lastEvent.x) / this.width;
+          dy = (this.lastEvent.y - event.y) / this.height;
+        }
+        shortBuf[0] = dx;
+        shortBuf[1] = dy;
+        shortBuf[2] = dz;
+
+        
+        shortBuf[3] = (event.y / this.height) * 10.0; // size
       }
 
       gl.activeTexture(gl.TEXTURE0);
@@ -253,6 +273,8 @@ var Graphics = {
     if (this.simulation.num_particles > w * h) {
       this.simulation.num_particles = 0;
     }
+    
+    this.lastEvent = event;
   },
 
   update: function(delta_time) {
@@ -395,17 +417,22 @@ var Graphics = {
 
     // update shader uniforms
 
-    // TODO make loop
-      
     // enable texture samplers in shader
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[0]); // necessary?
-    gl.uniform1i(shader.uniforms.uTexture0.location, 0); // this.simulation.previous.textures[0]);
+    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+      gl.activeTexture(gl.TEXTURE0 + tx_idx);
+      gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[tx_idx]);
+      gl.uniform1i(shader.uniforms["uTexture" + tx_idx].location, tx_idx);
+    }
 
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[1]); // necessary?
-    gl.uniform1i(shader.uniforms.uTexture1.location, 1); // this.simulation.previous.textures[1]);
+    gl.uniform3f(shader.uniforms.gravityLoc.location,
+      shader.uniforms.gravityLoc.value[0],
+      shader.uniforms.gravityLoc.value[1],
+      shader.uniforms.gravityLoc.value[2]
+    );
     
+    gl.uniform1f(shader.uniforms.gravityPower.location, shader.uniforms.gravityPower.value);
+    gl.uniform1f(shader.uniforms.friction.location, shader.uniforms.friction.value);
+
     gl.uniform2f(shader.uniforms.uResolution.location,
       shader.uniforms.uResolution.value[0],
       shader.uniforms.uResolution.value[1]
@@ -438,14 +465,11 @@ var Graphics = {
       shader.attributes.aUV.location,
       this.vertexBuffers.particleUV.size, gl.FLOAT, false, 0, 0);      
 
-    // TODO make loop
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.simulation.current.textures[0]);
-    gl.uniform1i(shader.uniforms.uTexture0.location, 0); // this.simulation.current.textures[0]);
-
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.simulation.current.textures[1]);
-    gl.uniform1i(shader.uniforms.uTexture1.location, 1); // this.simulation.current.textures[1]);
+    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+      gl.activeTexture(gl.TEXTURE0 + tx_idx);
+      gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[tx_idx]);
+      gl.uniform1i(shader.uniforms["uTexture" + tx_idx].location, tx_idx);
+    }
 
     gl.drawArrays(gl.POINTS, 0, this.vertexBuffers.particleUV.count);
     

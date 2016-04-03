@@ -26,19 +26,31 @@
   precision mediump float;
   
   uniform vec2 uResolution;
+  
+  uniform vec3 gravityLoc;
+  uniform float gravityPower;
+  uniform float friction;
+
   uniform sampler2D uTexture0; // x, y, z, ttl
   uniform sampler2D uTexture1; // r, g, b, a
+  uniform sampler2D uTexture2; // dx, dy, dz, sz
+  uniform sampler2D uTexture3; // 
 
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
 
     vec4 pdata_pos = texture2D(uTexture0, uv);
     vec4 pdata_color = texture2D(uTexture1, uv);
-    vec3 pos = pdata_pos.xyz + vec3(0.001 * (pdata_pos.w - 5.0), 0.0, 0.0);
+    vec4 pdata_vec = texture2D(uTexture2, uv);
+
+    vec3 pos = pdata_pos.xyz + pdata_vec.xyz; // vec3(0.001 * (pdata_pos.w - 5.0), 0.0, 0.0);
     float ttl = pdata_pos.w - 0.01;
 
     gl_FragData[0] = vec4(pos, ttl);
     gl_FragData[1] = pdata_color;
+    
+    vec3 gravityPull = (gravityLoc - pdata_pos.xyz) / gravityPower;
+    gl_FragData[2] = vec4(gravityPull + pdata_vec.xyz * friction, pdata_vec.w);
   }
   </script>
   
@@ -49,6 +61,8 @@
   varying vec2 vUV;
   uniform sampler2D uTexture0; // x, y, z, t
   uniform sampler2D uTexture1; // r, g, b, a
+  uniform sampler2D uTexture2; // dx, dy, dz, sz
+  uniform sampler2D uTexture3; // 
   
   vec2 uvToScreen(vec2 uv) {
     return uv * 2.0 - vec2(1.0, 1.0);
@@ -57,10 +71,10 @@
   void main() {
     vec4 pdata_pos = texture2D(uTexture0, aUV);
     v3xyz = pdata_pos.xyz;
-    float ttl = pdata_pos.w;
-    
-    gl_PointSize = ttl * 5.0;
     gl_Position = vec4(v3xyz, 1.0);
+
+    vec4 pdata_vec = texture2D(uTexture2, aUV);
+    gl_PointSize = pdata_vec.w * 5.0;
     
     vUV = aUV;
   }
@@ -76,6 +90,7 @@
   
   uniform sampler2D uTexture0; // x, y, z, t
   uniform sampler2D uTexture1; // r, g, b, a
+  uniform sampler2D uTexture2; // dx, dy, dz, sz
 
   void main() {
     vec4 pdata_pos = texture2D(uTexture0, vUV);

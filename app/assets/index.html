@@ -94,12 +94,13 @@
 
   void main() {
     vec4 pdata_pos = texture2D(uTexture0, vUV);
-    vec4 pdata_color = texture2D(uTexture1, vUV);
     
     float t = pdata_pos.w;
     if (t <= 0.0) {
       discard;
     }
+
+    vec4 pdata_color = texture2D(uTexture1, vUV);
     gl_FragColor = vec4(pdata_color.rgb, t / 10.0);
   }
   </script>

@@ -130,14 +130,12 @@ var Graphics = {
     this.canvas = canvas;
     this.onWindowResize();
 
-    this.event = null;
-
     canvas.addEventListener("mousedown", function(event) {
-      this.event = event;
+      this.handleMouseEvent(event);
     }.bind(this));
 
     canvas.addEventListener("mousemove", function(event) {
-      this.event = event;
+      this.handleMouseEvent(event);
     }.bind(this));
 
     (function(self) {
@@ -166,106 +164,98 @@ var Graphics = {
 
   },
 
-  update: function(delta_time) {
+  handleMouseEvent: function(event) {
+    var gl = this.gl;
+  
+    var w, h; w = h = SIMULATION_DIM;
+    var shortBuf = new Float32Array(4 * 4);
+  
+    // gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.previous.frame_buffer);
+
+    var num_particles = this.simulation.num_particles;
+
+    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+      var tx = this.simulation.previous.textures[tx_idx];
+      var aux_fb = this.simulation.previous.aux_frame_buffers[tx_idx];
     
-    if (this.event && 
-      this.event.buttons == 1 &&
-      this.event.type == "mousemove")
-    {
-      // download particle data from previous buffer
-      var gl = this.gl;
-      
-      var w, h; w = h = SIMULATION_DIM;
-      var shortBuf = new Float32Array(4 * 4);
-      
-      // gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.previous.frame_buffer);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
 
-      var num_particles = this.simulation.num_particles;
-    
-      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-        var tx = this.simulation.previous.textures[tx_idx];
-        var aux_fb = this.simulation.previous.aux_frame_buffers[tx_idx];
-        
-        gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
+      // should only be required on init, not update
+      // var draw_buffers_ext = this.webgl_extensions.draw_buffers_ext;
+      // gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL, gl.TEXTURE_2D, tx, 0);
 
-        // should only be required on init, not update
-        // var draw_buffers_ext = this.webgl_extensions.draw_buffers_ext;
-        // gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL, gl.TEXTURE_2D, tx, 0);
+      var x = num_particles % w;
+      var y = Math.floor(num_particles / w);
+      if (x == 0 && y == SIMULATION_DIM) {
+        y = 0;
+      }
+      // console.log("x: ", x, "y: ", y, "num_particles: ", num_particles, ", w: ", w, ", h: ", h);
 
-        var x = num_particles % w;
-        var y = Math.floor(num_particles / w);
-        if (x == 0 && y == SIMULATION_DIM) {
-          y = 0;
-        }
-        // console.log("x: ", x, "y: ", y, "num_particles: ", num_particles, ", w: ", w, ", h: ", h);
+      var spaceAvailable = w - x;
+      // if (spaceAvailable < 4) {
+      //   var overflow = 4 - spaceAvailable;
+      //   gl.readPixels(x, y, spaceAvailable, 1, gl.RGBA, gl.FLOAT, shortBuf);
+      //   var overBuf = new Float32Array(overflow * 4);
+      //   var newY = (y + 1) % h;
+      //   // gl.readPixels(0, newY, overflow, 1, gl.RGBA, gl.FLOAT, overBuf);
+      //   for (var i = 0; i < overBuf; i++) {
+      //     shortBuf[spaceAvailable + i] = overBuf[i];
+      //   }
+      // } else {
+      //   gl.readPixels(x, y, 4, 1, gl.RGBA, gl.FLOAT, shortBuf);
+      // }
 
-        var spaceAvailable = w - x;
-        // if (spaceAvailable < 4) {
-        //   var overflow = 4 - spaceAvailable;
-        //   gl.readPixels(x, y, spaceAvailable, 1, gl.RGBA, gl.FLOAT, shortBuf);
-        //   var overBuf = new Float32Array(overflow * 4);
-        //   var newY = (y + 1) % h;
-        //   // gl.readPixels(0, newY, overflow, 1, gl.RGBA, gl.FLOAT, overBuf);
-        //   for (var i = 0; i < overBuf; i++) {
-        //     shortBuf[spaceAvailable + i] = overBuf[i];
-        //   }
-        // } else {
-        //   gl.readPixels(x, y, 4, 1, gl.RGBA, gl.FLOAT, shortBuf);
-        // }
+      var base_index = num_particles * 4;
 
-        var base_index = num_particles * 4;
+      switch(tx_idx) {
+      case 0:
+        // particle position - x, y, z, ttl
+        shortBuf[0] = (event.x / this.width) * 2.0 - 1.0;
+        shortBuf[1] = (event.y / this.height) * -2.0 + 1.0;
+        shortBuf[2] = 0.0;
+        shortBuf[3] = 10.0;
+        break;
+      case 1:
+        // particle color - r, g, b, a
+        shortBuf[0] = (event.x / this.width);
+        shortBuf[1] = (event.y / this.height);
+        shortBuf[2] = 0.5;
+        shortBuf[3] = 1.0;
+        break;
 
-        switch(tx_idx) {
-        case 0:
-          // particle position - x, y, z, ttl
-          shortBuf[0] = (this.event.x / this.width) * 2.0 - 1.0;
-          shortBuf[1] = (this.event.y / this.height) * -2.0 + 1.0;
-          shortBuf[2] = 0.0;
-          shortBuf[3] = 10.0;
-          break;
-        case 1:
-          // particle color - r, g, b, a
-          shortBuf[0] = (this.event.x / this.width);
-          shortBuf[1] = (this.event.y / this.height);
-          shortBuf[2] = 0.5;
-          shortBuf[3] = 1.0;
-          break;
-
-        // NOT YET IMPLEMENTED
-        case 2:
-          // particle size
-          shortBuf[0] = (this.event.y / this.height) * 10.0; // size
-        }
-
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, tx);
-
-        if (spaceAvailable < 4) {
-          gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, spaceAvailable, 1, gl.RGBA, gl.FLOAT, shortBuf);
-          var overflow = 4 - spaceAvailable;
-          var overBuf = new Float32Array(overflow * 4);
-          for (var i = 0; i < overBuf; i++) {
-            overBuf[i] = shortBuf[spaceAvailable + i];
-          }
-          var newY = (y + 1) % h;
-          gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, newY, overflow, 1, gl.RGBA, gl.FLOAT, overBuf);
-        } else {
-          gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, 4, 1, gl.RGBA, gl.FLOAT, shortBuf);
-        }
+      // NOT YET IMPLEMENTED
+      case 2:
+        // particle size
+        shortBuf[0] = (event.y / this.height) * 10.0; // size
       }
 
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      
-      this.simulation.num_particles += 1;
-      if (this.simulation.num_particles > w * h) {
-        this.simulation.num_particles = 0;
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tx);
+
+      if (spaceAvailable < 4) {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, spaceAvailable, 1, gl.RGBA, gl.FLOAT, shortBuf);
+        var overflow = 4 - spaceAvailable;
+        var overBuf = new Float32Array(overflow * 4);
+        for (var i = 0; i < overBuf; i++) {
+          overBuf[i] = shortBuf[spaceAvailable + i];
+        }
+        var newY = (y + 1) % h;
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, newY, overflow, 1, gl.RGBA, gl.FLOAT, overBuf);
+      } else {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, 4, 1, gl.RGBA, gl.FLOAT, shortBuf);
       }
-      
-      // add new particle data at buffer_length + 1, with mouse position and other particle attributes
-      // reset texture with particle data
-      this.event = null;
     }
+
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  
+    this.simulation.num_particles += 1;
+    if (this.simulation.num_particles > w * h) {
+      this.simulation.num_particles = 0;
+    }
+  },
+
+  update: function(delta_time) {
     
     this.simulate(delta_time);
     

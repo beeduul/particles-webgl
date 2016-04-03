@@ -1,7 +1,7 @@
 "use strict";
 
 var NUM_TEXTURES = 4;
-var SIMULATION_DIM = 100;
+var SIMULATION_DIM = 128;
 
 var Graphics = {
 

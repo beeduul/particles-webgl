@@ -291,6 +291,14 @@ var Graphics = {
     var draw_buffers_ext = this.webgl_extensions.draw_buffers_ext;
     var gl = this.gl;
     
+    var w, h; w = h = SIMULATION_DIM;
+
+    var size = w * h * 4;
+    var src_buffer = new Float32Array(size);
+    for (var i = 0; i < size; i++) {
+      src_buffer[i] = 0;
+    }
+    
     // initialize last and next simulation buffers
     for (var sim_buffer_idx = 0; sim_buffer_idx < 2; sim_buffer_idx++) {
       
@@ -310,19 +318,7 @@ var Graphics = {
         var tx = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, tx);
-        var w, h; w = h = SIMULATION_DIM;
         
-        var src_buffer = new Float32Array(w * h * 4);
-        for (var y = 0; y < h; ++y) {
-          for (var x = 0; x < w; ++x) {
-            var idx_base = (y * w + x) * 4;
-            src_buffer[idx_base + 0] = 0.0; // x
-            src_buffer[idx_base + 1] = 0.0; // y
-            src_buffer[idx_base + 2] = 0.0; // z
-            src_buffer[idx_base + 3] = 0.0; // time
-          }
-        }
-
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, src_buffer);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);

@@ -467,8 +467,8 @@ var Graphics = {
     
     gl.viewport(0, 0, this.width, this.height);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // gl.enable(gl.BLEND);
+    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     
     var shader = this.shaders.particle;
     gl.useProgram(shader.program);
@@ -496,7 +496,7 @@ var Graphics = {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.disableVertexAttribArray(shader.attributes.aUV.location);
     gl.useProgram(null);
-    gl.disable(gl.BLEND);
+    // gl.disable(gl.BLEND);
   },
 
   setupGL: function() {

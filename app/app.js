@@ -11,17 +11,19 @@ var App = {
     var canvas = document.getElementById("glcanvas");
     Graphics.init(canvas);
     
-    this.start_time = this.last_time = Date.now();
+    this.start_time = Date.now();
     
+    this.last_time = 0;
+
     this.update();
   },
   
   update: function() {
-    var now_time = Date.now();
-    var delta_time = now_time - this.last_time;
-    this.last_time = now_time;
+    var nowTime = Date.now() - this.start_time;
+    var deltaTime = nowTime - this.last_time;
+    this.last_time = nowTime;
 
-    Graphics.update(delta_time)
+    Graphics.update(nowTime, deltaTime)
     var fn = this.update.bind(this);
     window.requestAnimationFrame(fn);
   }

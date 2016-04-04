@@ -26,6 +26,9 @@ var Graphics = {
         aUV: {},
       },
       uniforms: {
+        deltaTime: { value: null },
+        nowTime: { value: null },
+
         uTexture0:    { value: null },
         uTexture1:    { value: null },
         uTexture2:    { value: null },
@@ -38,12 +41,15 @@ var Graphics = {
       },
       uniforms: {
         uResolution: { value: [SIMULATION_DIM, SIMULATION_DIM] },
+        deltaTime: { value: null },
+        nowTime: { value: null },
+        
         uTexture0:   { value: null },
         uTexture1:   { value: null },
         uTexture2:   { value: null },
         uTexture3:    { value: null },
         gravityLoc:  { value: [0,0,0] },
-        gravityPower: { value: 1000.0 },
+        gravityPower: { value: 100.0 },
         friction:    { value: 0.999 }
       }
     }
@@ -218,18 +224,23 @@ var Graphics = {
 
       switch(tx_idx) {
       case 0:
-        // particle position - x, y, z, ttl
+        // particle position - x, y, z
         shortBuf[0] = (event.x / this.width) * 2.0 - 1.0;
         shortBuf[1] = (event.y / this.height) * -2.0 + 1.0;
         shortBuf[2] = 0.0;
-        shortBuf[3] = 10.0;
+        
+        // birth
+        shortBuf[3] = this.nowTime;
         break;
+
       case 1:
-        // particle color:  r, g, b, a
+        // particle color:  r, g, b
         shortBuf[0] = (event.x / this.width);
         shortBuf[1] = (event.y / this.height);
         shortBuf[2] = 0.5;
-        shortBuf[3] = 1.0;
+
+        // particle lifetime
+        shortBuf[3] = 10000.0;
         break;
 
       case 2:
@@ -238,15 +249,18 @@ var Graphics = {
         var dy = 0;
         var dz = 0;
         if (this.lastEvent) {
-          dx = (event.x - this.lastEvent.x) / this.width;
-          dy = (this.lastEvent.y - event.y) / this.height;
+          dx = (event.x - this.lastEvent.x) / this.width * 50;
+          dy = (this.lastEvent.y - event.y) / this.height * 50;
         }
         shortBuf[0] = dx;
         shortBuf[1] = dy;
         shortBuf[2] = dz;
 
-        
-        shortBuf[3] = (event.y / this.height) * 10.0; // size
+        shortBuf[3] = 25.0; // (event.y / this.height) * 25.0; // size
+        break;
+
+      case 3:
+        break;
       }
 
       gl.activeTexture(gl.TEXTURE0);
@@ -277,9 +291,11 @@ var Graphics = {
     this.lastEvent = event;
   },
 
-  update: function(delta_time) {
-    
-    this.simulate(delta_time);
+  update: function(nowTime, deltaTime) {
+    this.nowTime = nowTime;
+    this.deltaTime = deltaTime;
+
+    this.simulate();
     
     this.draw();
 
@@ -386,7 +402,7 @@ var Graphics = {
     
   },
   
-  simulate: function(delta_time) {
+  simulate: function() {
     
     var gl = this.gl;
 
@@ -419,6 +435,9 @@ var Graphics = {
       gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[tx_idx]);
       gl.uniform1i(shader.uniforms["uTexture" + tx_idx].location, tx_idx);
     }
+
+    gl.uniform1f(shader.uniforms.nowTime.location, this.nowTime);
+    gl.uniform1f(shader.uniforms.deltaTime.location, this.deltaTime);
 
     gl.uniform3f(shader.uniforms.gravityLoc.location,
       shader.uniforms.gravityLoc.value[0],
@@ -460,6 +479,10 @@ var Graphics = {
     gl.vertexAttribPointer(
       shader.attributes.aUV.location,
       this.vertexBuffers.particleUV.size, gl.FLOAT, false, 0, 0);      
+
+    gl.uniform1f(shader.uniforms.nowTime.location, this.nowTime);
+    gl.uniform1f(shader.uniforms.deltaTime.location, this.deltaTime);
+
 
     for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
       gl.activeTexture(gl.TEXTURE0 + tx_idx);

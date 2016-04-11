@@ -48,7 +48,8 @@ var Graphics = {
         uTexture1:   { value: null },
         uTexture2:   { value: null },
         uTexture3:    { value: null },
-        gravityLoc:  { value: [0,0,0] },
+        gravityType:  { value: 1 }, // 0: point, 1: vector
+        gravityVal:   { value: [0,-0.01,0] },
         gravityPower: { value: 100.0 },
         friction:    { value: 0.999 }
       }
@@ -439,12 +440,13 @@ var Graphics = {
     gl.uniform1f(shader.uniforms.nowTime.location, this.nowTime);
     gl.uniform1f(shader.uniforms.deltaTime.location, this.deltaTime);
 
-    gl.uniform3f(shader.uniforms.gravityLoc.location,
-      shader.uniforms.gravityLoc.value[0],
-      shader.uniforms.gravityLoc.value[1],
-      shader.uniforms.gravityLoc.value[2]
+    gl.uniform3f(shader.uniforms.gravityVal.location,
+      shader.uniforms.gravityVal.value[0],
+      shader.uniforms.gravityVal.value[1],
+      shader.uniforms.gravityVal.value[2]
     );
     
+    gl.uniform1i(shader.uniforms.gravityType.location, shader.uniforms.gravityType.value);
     gl.uniform1f(shader.uniforms.gravityPower.location, shader.uniforms.gravityPower.value);
     gl.uniform1f(shader.uniforms.friction.location, shader.uniforms.friction.value);
 

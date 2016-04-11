@@ -35,9 +35,9 @@
   uniform float friction;
 
   uniform sampler2D uTexture0; // x, y, z, birth
-  uniform sampler2D uTexture1; // r, g, b, lifetime
+  uniform sampler2D uTexture1; // birth r, g, b, lifetime
   uniform sampler2D uTexture2; // dx, dy, dz, sz
-  uniform sampler2D uTexture3;
+  uniform sampler2D uTexture3; // death r, g, b, ?
 
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
@@ -45,7 +45,8 @@
     vec4 pdata0 = texture2D(uTexture0, uv);
     vec4 pdata1 = texture2D(uTexture1, uv);
     vec4 pdata2 = texture2D(uTexture2, uv);
-
+    gl_FragData[3] = texture2D(uTexture3, uv);
+    
     float birth = pdata0.w;
     float lifetime = pdata1.w;
     float ttl = birth + lifetime - nowTime;
@@ -83,7 +84,7 @@
   uniform sampler2D uTexture0; // x, y, z, birth
   uniform sampler2D uTexture1; // r, g, b, lifetime
   uniform sampler2D uTexture2; // dx, dy, dz, sz
-  uniform sampler2D uTexture3;
+  uniform sampler2D uTexture3; // death r, g, b, ?
   
   void main() {
     vec4 pdata0 = texture2D(uTexture0, aUV);
@@ -133,20 +134,23 @@
   uniform sampler2D uTexture0; // x, y, z, birth
   uniform sampler2D uTexture1; // r, g, b, lifetime
   uniform sampler2D uTexture2; // dx, dy, dz, sz
-  uniform sampler2D uTexture3;
+  uniform sampler2D uTexture3; // death r, g, b, ?
 
   void main() {
     vec4 pdata0 = texture2D(uTexture0, vUV);
     vec4 pdata1 = texture2D(uTexture1, vUV);
-    
+    vec4 pdata3 = texture2D(uTexture3, vUV);
+
     float birth = pdata0.w;
     float lifetime = pdata1.w;
     float ttl = birth + lifetime - nowTime;
     if (ttl <= 0.0) {
       discard;
     }
-
-    gl_FragColor = vec4(pdata1.rgb, 1.0);
+    vec3 birthCol = pdata1.rgb;
+    vec3 deathCol = pdata3.rgb;
+    float pct = ttl / lifetime;
+    gl_FragColor = vec4(mix(birthCol, deathCol, pct), 1.0);
   }
   </script>
   

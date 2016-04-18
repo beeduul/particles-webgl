@@ -2,6 +2,9 @@
   "name": "particles",
   "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "start": "./node_modules/brunch/bin/brunch watch --server"
+  },
   "devDependencies": {
     "brunch": "^2.3.0",
     "javascript-brunch": "^2.0.0",

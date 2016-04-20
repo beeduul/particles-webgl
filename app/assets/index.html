@@ -5,11 +5,8 @@
   <title>WebGL Particles</title>
 </head>
 <body id="index">
-  <input id="slider1" type="range" min="100" max="500" step="10" />
-  <canvas id="glcanvas" style="height: 100vh; width: 100vw;">
-
-    Your browser doesn't appear to support the <code>&lt;canvas&gt;</code> element.
-  </canvas>
+  <div id="app">
+  </div>
   
   <script id="particle_sim_vs" type="x-shader/x-vertex">
   #ifdef GL_ES
@@ -158,7 +155,7 @@
 
   <link rel="stylesheet" type="text/css" href="app.css" media="screen" />
   <script src="app.js"></script>
-  <script>require('app').init();</script>
+  <script>require('ui');</script>
   
 </body>
 </html>

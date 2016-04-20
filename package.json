@@ -5,9 +5,15 @@
   "scripts": {
     "start": "./node_modules/brunch/bin/brunch watch --server"
   },
-  "devDependencies": {
+  "dependencies": {
+    "babel-brunch": "^6.0.2",
     "brunch": "^2.3.0",
     "javascript-brunch": "^2.0.0",
+    "react": "^15.0.1",
+    "react-dom": "^15.0.1",
     "sass-brunch": "^2.6.2"
+  },
+  "devDependencies": {
+    "babel-preset-react": "^6.5.0"
   }
 }

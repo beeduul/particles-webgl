@@ -1,0 +1,14 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+#app #ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+}
+#glcanvas {
+  height: 100vh;
+  width: 100vw;
+}

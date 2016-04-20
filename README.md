@@ -1,4 +1,4 @@
 # run
-./node_modules/brunch/bin/brunch watch --server
+npm start
 
-visit localhost:3333
+go to http://localhost:3333

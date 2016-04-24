@@ -199,13 +199,11 @@ var Graphics = {
     if (event.type == "mousedown") {
       // event.preventDefault();
       this.rgb = [Math.random(), Math.random(), Math.random()]
-      this.addParticleAt(event.x, event.y, this.rgb);
+      this.addParticlesAt(event.x, event.y, this.rgb);
     } else if (event.type == "mousemove") {
       // event.preventDefault();
       if (this.rgb) {
-        for (var i = 0; i < 10; i++) {
-          this.addParticleAt(event.x, event.y, this.rgb);
-        }
+        this.addParticlesAt(event.x, event.y, this.rgb, 10);
       }
     } else if (event.type == "mouseup") {
       this.rgb = null;
@@ -213,105 +211,109 @@ var Graphics = {
     }
   },
   
-  addParticleAt: function(px, py, rgb) {
+  addParticlesAt: function(px, py, rgb, numToAdd) {
     var gl = this.gl;
-  
+    
+    numToAdd |= 1;
+
     var sim_width, sim_height; sim_width = sim_height = SIMULATION_DIM;
     var shortBuf = new Float32Array(4 * 4);
   
-    var num_particles = this.simulation.num_particles;
-
     var birthCol = [];
 
-    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-      var tx = this.simulation.previous.textures[tx_idx];
-      var aux_fb = this.simulation.previous.aux_frame_buffers[tx_idx];
+    for (var p = 0; p < numToAdd; p++) {
+      var num_particles = this.simulation.num_particles;
+      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+        var tx = this.simulation.previous.textures[tx_idx];
+        var aux_fb = this.simulation.previous.aux_frame_buffers[tx_idx];
     
-      gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
 
-      var sim_x = num_particles % sim_width;
-      var sim_y = Math.floor(num_particles / sim_width);
-      if (sim_x == 0 && sim_y == SIMULATION_DIM) {
-        sim_y = 0;
-      }
-
-      var spaceAvailable = sim_width - sim_x;
-
-      var base_index = num_particles * 4;
-
-      switch(tx_idx) {
-      case 0:
-        // particle position - x, y, z
-        shortBuf[0] = (px / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
-        shortBuf[1] = (py / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
-        shortBuf[2] = 0.0;
-        shortBuf[3] = 0;
-        break;
-
-      case 1:
-        // birth particle color:  r, g, b
-        shortBuf[0] = birthCol[0] = clamp(rgb[0] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
-        shortBuf[1] = birthCol[1] = clamp(rgb[1] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
-        shortBuf[2] = birthCol[2] = clamp(rgb[2] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
-
-        // birth time
-        shortBuf[3] = this.nowTime;
-
-        break;
-
-      case 2:
-        // dx, dy, dz, sz (particle size)
-        var dx = 0;
-        var dy = 0;
-        var dz = 0;
-        if (this.lastEvent) {
-          dx = (px - this.lastEvent.x) / this.width;
-          dy = (this.lastEvent.y - py) / this.height;
+        var sim_x = num_particles % sim_width;
+        var sim_y = Math.floor(num_particles / sim_width);
+        if (sim_x == 0 && sim_y == SIMULATION_DIM) {
+          sim_y = 0;
         }
+
+        var spaceAvailable = sim_width - sim_x;
+
+        var base_index = num_particles * 4;
+
+        switch(tx_idx) {
+        case 0:
+          // particle position - x, y, z
+          shortBuf[0] = (px / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
+          shortBuf[1] = (py / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
+          shortBuf[2] = 0.0;
+          shortBuf[3] = 0;
+          break;
+
+        case 1:
+          // birth particle color:  r, g, b
+          shortBuf[0] = birthCol[0] = clamp(rgb[0] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
+          shortBuf[1] = birthCol[1] = clamp(rgb[1] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
+          shortBuf[2] = birthCol[2] = clamp(rgb[2] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
+
+          // birth time
+          shortBuf[3] = this.nowTime;
+
+          break;
+
+        case 2:
+          // dx, dy, dz, sz (particle size)
+          var dx = 0;
+          var dy = 0;
+          var dz = 0;
+          if (this.lastEvent) {
+            dx = (px - this.lastEvent.x) / this.width;
+            dy = (this.lastEvent.y - py) / this.height;
+          }
         
-        var vectorStrengthMagicNumber = 50;
+          var vectorStrengthMagicNumber = 50;
         
-        shortBuf[0] = dx + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
-        shortBuf[1] = dy + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
-        shortBuf[2] = dz + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
+          shortBuf[0] = dx + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
+          shortBuf[1] = dy + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
+          shortBuf[2] = dz + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
 
-        shortBuf[3] = 25.0; // (py / this.height) * 25.0; // size
-        break;
+          shortBuf[3] = 25.0; // (py / this.height) * 25.0; // size
+          break;
 
-      case 3:
-        // death particle color:  r, g, b
-        shortBuf[0] = clamp(1.0 - birthCol[0] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
-        shortBuf[1] = clamp(1.0 - birthCol[1] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
-        shortBuf[2] = clamp(1.0 - birthCol[2] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
+        case 3:
+          // death particle color:  r, g, b
+          shortBuf[0] = clamp(1.0 - birthCol[0] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
+          shortBuf[1] = clamp(1.0 - birthCol[1] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
+          shortBuf[2] = clamp(1.0 - birthCol[2] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
 
-        // death time
-        shortBuf[3] = this.nowTime + 10000.0; // ms
-        break;
-      }
-
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, tx);
-
-      if (spaceAvailable < 4) {
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, spaceAvailable, 1, gl.RGBA, gl.FLOAT, shortBuf);
-        var overflow = 4 - spaceAvailable;
-        var overBuf = new Float32Array(overflow * 4);
-        for (var i = 0; i < overBuf; i++) {
-          overBuf[i] = shortBuf[spaceAvailable + i];
+          // death time
+          shortBuf[3] = this.nowTime + 10000.0; // ms
+          break;
         }
-        var newY = (sim_y + 1) % sim_height;
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, newY, overflow, 1, gl.RGBA, gl.FLOAT, overBuf);
-      } else {
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, 4, 1, gl.RGBA, gl.FLOAT, shortBuf);
-      }
-    }
 
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, tx);
+
+        if (spaceAvailable < 4) {
+          gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, spaceAvailable, 1, gl.RGBA, gl.FLOAT, shortBuf);
+          var overflow = 4 - spaceAvailable;
+          var overBuf = new Float32Array(overflow * 4);
+          for (var i = 0; i < overBuf; i++) {
+            overBuf[i] = shortBuf[spaceAvailable + i];
+          }
+          var newY = (sim_y + 1) % sim_height;
+          gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, newY, overflow, 1, gl.RGBA, gl.FLOAT, overBuf);
+        } else {
+          gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, 4, 1, gl.RGBA, gl.FLOAT, shortBuf);
+        }
+      }
+
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   
-    this.simulation.num_particles += 1;
-    if (this.simulation.num_particles > sim_width * sim_height) {
-      this.simulation.num_particles = 0;
+      this.simulation.num_particles += 1;
+      if (this.simulation.num_particles > sim_width * sim_height) {
+        this.simulation.num_particles = 0;
+      }
+      
     }
     
     this.lastEvent = { x: px, y: py };

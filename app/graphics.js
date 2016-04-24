@@ -92,7 +92,7 @@ var Graphics = {
     colorNoise: 0.1,
     positionalNoise: 0.1,
     directionalNoise: 0.0001,
-    particleSize: 5.0,
+    particleSize: 3.0,
     particleLifetime: 50000, // ms
     numParticlesPerSecond: 100,
     
@@ -212,6 +212,14 @@ var Graphics = {
       this.rgb = null;
       this.lastEvent = null;
     }
+  },
+  
+  getSimulationValue: function(name) {
+    return this.simulation[name];
+  },
+  
+  setSimulationValue: function(name, value) {
+    this.simulation[name] = value;
   },
   
   addParticlesAt: function(px, py, rgb) {

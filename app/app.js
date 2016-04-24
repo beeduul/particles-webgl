@@ -31,6 +31,16 @@ var App = {
 
     var fn = this.update.bind(this);
     window.requestAnimationFrame(fn);
+  },
+
+  getSimulationValue: function(name) {
+    var value = Graphics.getSimulationValue(name);
+    console.log("getSimulationValue ", name, value);
+    return value;
+  },
+
+  setSimulationValue: function(name, value) {
+    Graphics.setSimulationValue(name, value);
   }
   
 };

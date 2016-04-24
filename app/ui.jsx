@@ -3,6 +3,19 @@ var ReactDOM = require('react-dom');
 
 var app = require('app');
 
+var Slider = React.createClass({
+  
+  handleOnInput: function(event) {
+    app.setSimulationValue('particleSize', event.target.value);
+  },
+  
+  render: function() {
+    return (
+      <input class="slider" type="range" value={this.props.particleSize} min="1" max="50" onInput={this.handleOnInput}/>
+    );
+  }
+});
+
 var UI = React.createClass({
   componentDidMount: function() {
     app.init();
@@ -11,7 +24,7 @@ var UI = React.createClass({
   render: function() {
     return (
       <div id="ui">
-        <input id="slider" type="range" min="100" max="500" step="10" />
+        <Slider particleSize={app.getSimulationValue('particleSize')}/>
       </div>
     )
   }

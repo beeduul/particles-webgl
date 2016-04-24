@@ -90,7 +90,7 @@ var Graphics = {
     num_particles: 0,
     
     colorNoise: 0.1,
-    positionalNoise: 0.1,
+    positionalNoise: 0.01, // percent of screen
     directionalNoise: 0.0001,
     particleSize: 3.0,
     particleLifetime: 50000, // ms
@@ -259,10 +259,10 @@ var Graphics = {
             y = py - (py - this.lastEvent.y) * t;
           }
           // particle position - x, y, z
-          shortBuf[0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
-          shortBuf[1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
+          shortBuf[0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise;
+          shortBuf[1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise;
           shortBuf[2] = 0.0;
-          shortBuf[3] = 0;
+          shortBuf[3] = 0.0;
           break;
 
         case 1:

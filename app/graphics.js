@@ -459,7 +459,10 @@ var Graphics = {
 
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.blendFunc(gl.ONE, gl.ZERO);  // so alpha output color draws correctly
+
     // make sure no DEPTH_TEST
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
 
     var shader = this.shaders.particle_sim;
     gl.useProgram(shader.program);
@@ -512,7 +515,12 @@ var Graphics = {
     var gl = this.gl;
     
     gl.viewport(0, 0, this.width, this.height);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // make sure DEPTH_TEST is on
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(true);
+
     // gl.enable(gl.BLEND);
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     
@@ -552,11 +560,12 @@ var Graphics = {
     
     // Set clear color to black, fully opaque
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearDepth(100000.0);
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
-
+    gl.depthFunc(gl.LESS);
     // Clear the color as well as the depth buffer.
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     var available_extensions = gl.getSupportedExtensions();
     console.log(available_extensions);

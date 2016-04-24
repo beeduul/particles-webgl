@@ -90,8 +90,11 @@ var Graphics = {
     num_particles: 0,
     
     colorNoise: 0.1,
-    positionalNoise: 1.0,
-    directionalNoise: 0.005,
+    positionalNoise: 0.1,
+    directionalNoise: 0.0001,
+    particleSize: 5.0,
+    particleLifetime: 50000, // ms
+    numParticlesPerSecond: 100,
     
     isInitialized: function() {
       return (this.current && this.previous);
@@ -203,7 +206,7 @@ var Graphics = {
     } else if (event.type == "mousemove") {
       // event.preventDefault();
       if (this.rgb) {
-        this.addParticlesAt(event.x, event.y, this.rgb, 10);
+        this.addParticlesAt(event.x, event.y, this.rgb);
       }
     } else if (event.type == "mouseup") {
       this.rgb = null;
@@ -211,17 +214,17 @@ var Graphics = {
     }
   },
   
-  addParticlesAt: function(px, py, rgb, numToAdd) {
+  addParticlesAt: function(px, py, rgb) {
     var gl = this.gl;
     
-    numToAdd |= 1;
-
     var sim_width, sim_height; sim_width = sim_height = SIMULATION_DIM;
     var shortBuf = new Float32Array(4 * 4);
   
     var birthCol = [];
-
+    var numToAdd = Math.floor(this.simulation.numParticlesPerSecond / this.deltaTime) + 1;
+    
     for (var p = 0; p < numToAdd; p++) {
+      var t = p / numToAdd;
       var num_particles = this.simulation.num_particles;
       for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
         var tx = this.simulation.previous.textures[tx_idx];
@@ -241,9 +244,15 @@ var Graphics = {
 
         switch(tx_idx) {
         case 0:
+          var x = px;
+          var y = px;
+          if (this.lastEvent) {
+            x = px - (px - this.lastEvent.x) * t;
+            y = py - (py - this.lastEvent.y) * t;
+          }
           // particle position - x, y, z
-          shortBuf[0] = (px / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
-          shortBuf[1] = (py / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
+          shortBuf[0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
+          shortBuf[1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
           shortBuf[2] = 0.0;
           shortBuf[3] = 0;
           break;
@@ -275,7 +284,7 @@ var Graphics = {
           shortBuf[1] = dy + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
           shortBuf[2] = dz + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
 
-          shortBuf[3] = 25.0; // (py / this.height) * 25.0; // size
+          shortBuf[3] = this.simulation.particleSize;
           break;
 
         case 3:
@@ -285,7 +294,7 @@ var Graphics = {
           shortBuf[2] = clamp(1.0 - birthCol[2] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
 
           // death time
-          shortBuf[3] = this.nowTime + 10000.0; // ms
+          shortBuf[3] = this.nowTime + this.simulation.particleLifetime; // ms
           break;
         }
 

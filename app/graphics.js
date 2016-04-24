@@ -196,7 +196,6 @@ var Graphics = {
   },
 
   handleMouseEvent: function(event) {
-    console.log(event.type);
     if (event.type == "mousedown") {
       // event.preventDefault();
       this.rgb = [Math.random(), Math.random(), Math.random()]

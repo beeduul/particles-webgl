@@ -33,10 +33,10 @@
   uniform float gravityPower;
   uniform float friction;
 
-  uniform sampler2D uTexture0; // x, y, z, birth
-  uniform sampler2D uTexture1; // birth r, g, b, lifetime
+  uniform sampler2D uTexture0; // x, y, z
+  uniform sampler2D uTexture1; // birth r, g, b, time
   uniform sampler2D uTexture2; // dx, dy, dz, sz
-  uniform sampler2D uTexture3; // death r, g, b, ?
+  uniform sampler2D uTexture3; // death r, g, b, time
 
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
@@ -44,19 +44,25 @@
     vec4 pdata0 = texture2D(uTexture0, uv);
     vec4 pdata1 = texture2D(uTexture1, uv);
     vec4 pdata2 = texture2D(uTexture2, uv);
-    gl_FragData[3] = texture2D(uTexture3, uv);
+    vec4 pdata3 = texture2D(uTexture3, uv);
     
-    float birth = pdata0.w;
-    float lifetime = pdata1.w;
-    float ttl = birth + lifetime - nowTime;
-    if (ttl < 0.0) {
+    float birth = pdata1.w;
+    float death = pdata3.w;
+    
+    if (birth == 0.0 || death > 0.0 && nowTime > death) {
       gl_FragData[0] = vec4(0.0);
       gl_FragData[1] = vec4(0.0);
       gl_FragData[2] = vec4(0.0);
+      gl_FragData[3] = vec4(0.0);
     } else {
+
+      float lifetime = death - birth;
+      float age = nowTime - birth;
+      float age_t = age / lifetime;
+      float size = pdata2.w;
+
       vec3 pos = pdata0.xyz + pdata2.xyz * deltaTime / 1000.0;
       gl_FragData[0] = vec4(pos, pdata0.w);
-
       gl_FragData[1] = pdata1;
     
       vec3 velocity;
@@ -66,7 +72,9 @@
       } else {
         velocity = vec3(pdata2.xyz * friction + gravityVal);
       }
-      gl_FragData[2] = vec4(velocity, pdata2.w);
+
+      gl_FragData[2] = vec4(velocity, size);
+      gl_FragData[3] = pdata3;
     }
   }
   </script>
@@ -74,46 +82,52 @@
   <script id='particle_vs' type="x-shader/x-vertex">
   // attribute vec2 vertexPosition;
   attribute vec2 aUV;
-  varying vec3 v3xyz;
   varying vec2 vUV;
 
   uniform float nowTime;
   uniform float deltaTime;
 
-  uniform sampler2D uTexture0; // x, y, z, birth
-  uniform sampler2D uTexture1; // r, g, b, lifetime
+  uniform sampler2D uTexture0; // x, y, z
+  uniform sampler2D uTexture1; // birth r, g, b, time
   uniform sampler2D uTexture2; // dx, dy, dz, sz
-  uniform sampler2D uTexture3; // death r, g, b, ?
+  uniform sampler2D uTexture3; // death r, g, b, time
   
   void main() {
     vec4 pdata0 = texture2D(uTexture0, aUV);
     vec4 pdata1 = texture2D(uTexture1, aUV);
     vec4 pdata2 = texture2D(uTexture2, aUV);
+    vec4 pdata3 = texture2D(uTexture3, aUV);
 
-    v3xyz = pdata0.xyz;
+    vec3 v3xyz = pdata0.xyz;
+    
+    
     gl_Position = vec4(v3xyz, 1.0);
 
-    float birth = pdata0.w;
-    float lifetime = pdata1.w;
-    float death = birth + lifetime;
+    float birth = pdata1.w;
+    float death = pdata3.w;
     
-    if (death > nowTime) {
-      // float ttl = death - nowTime;
-      float age = (nowTime - birth) / lifetime;
-      float size = pdata2.w;
+    float size = pdata2.w;
+    
+    if (birth == 0.0 || death > 0.0 && nowTime > death) {
+      gl_PointSize = 100.0;
+    } else {
+      
+      float lifetime = death - birth;
+      float age = nowTime - birth;
+      float age_t = age / lifetime;
+      
+      // gl_PointSize = floor((1.0 - age_t) * 10.0) + 1.0;
 
-      if (age < 0.1) {
-        gl_PointSize = size * age * 10.0;
+      if (age_t < 0.1) {
+        gl_PointSize = size * age_t * 10.0; //  / v3xyz.z;
       } else
-      if (age > 0.9) {
-        gl_PointSize = size * (1.0 - age) * 10.0;
+      if (age_t > 0.9) {
+        gl_PointSize = size * (1.0 - age_t) * 10.0; //  / v3xyz.z;
       } else
       {
-        gl_PointSize = size;
+        gl_PointSize = size; // / v3xyz.z;
       }
-    } else {
-      gl_PointSize = 1.0;
-    }
+    } 
     
     vUV = aUV;
   }
@@ -130,26 +144,32 @@
   uniform float nowTime;
   uniform float deltaTime;
   
-  uniform sampler2D uTexture0; // x, y, z, birth
-  uniform sampler2D uTexture1; // r, g, b, lifetime
+  uniform sampler2D uTexture0; // x, y, z
+  uniform sampler2D uTexture1; // birth r, g, b, time
   uniform sampler2D uTexture2; // dx, dy, dz, sz
-  uniform sampler2D uTexture3; // death r, g, b, ?
+  uniform sampler2D uTexture3; // death r, g, b, time
 
   void main() {
     vec4 pdata0 = texture2D(uTexture0, vUV);
     vec4 pdata1 = texture2D(uTexture1, vUV);
+    vec4 pdata2 = texture2D(uTexture2, vUV);
     vec4 pdata3 = texture2D(uTexture3, vUV);
+    
+    float birth = pdata1.w;
+    float death = pdata3.w;
 
-    float birth = pdata0.w;
-    float lifetime = pdata1.w;
-    float ttl = birth + lifetime - nowTime;
-    if (ttl <= 0.0) {
+    if (birth == 0.0 || death > 0.0 && nowTime > death) {
       discard;
     }
+
+    float lifetime = death - birth;
+    float age = nowTime - birth;
+
+    float age_t = age / lifetime;    
     vec3 birthCol = pdata1.rgb;
     vec3 deathCol = pdata3.rgb;
-    float pct = ttl / lifetime;
-    gl_FragColor = vec4(mix(birthCol, deathCol, pct), 1.0);
+    
+    gl_FragColor = vec4(mix(birthCol, deathCol, age_t), 1.0);
   }
   </script>
 

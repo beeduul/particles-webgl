@@ -245,19 +245,18 @@ var Graphics = {
         shortBuf[0] = (px / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
         shortBuf[1] = (py / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise / 10;
         shortBuf[2] = 0.0;
-        
-        // birth
-        shortBuf[3] = this.nowTime;
+        shortBuf[3] = 0;
         break;
 
       case 1:
-        // particle color:  r, g, b
+        // birth particle color:  r, g, b
         shortBuf[0] = birthCol[0] = clamp(rgb[0] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
         shortBuf[1] = birthCol[1] = clamp(rgb[1] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
         shortBuf[2] = birthCol[2] = clamp(rgb[2] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
 
-        // particle lifetime
-        shortBuf[3] = 10000.0; // ms
+        // birth time
+        shortBuf[3] = this.nowTime;
+
         break;
 
       case 2:
@@ -280,12 +279,13 @@ var Graphics = {
         break;
 
       case 3:
-        // particle color:  r, g, b
+        // death particle color:  r, g, b
         shortBuf[0] = clamp(1.0 - birthCol[0] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
         shortBuf[1] = clamp(1.0 - birthCol[1] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
         shortBuf[2] = clamp(1.0 - birthCol[2] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
 
-        shortBuf[3] = 0; // ?
+        // death time
+        shortBuf[3] = this.nowTime + 10000.0; // ms
         break;
       }
 

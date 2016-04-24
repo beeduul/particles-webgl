@@ -26,7 +26,7 @@ var App = {
 
     if (nowTime - this.last_time > 1000 / FPSLimit) {
       this.last_time = nowTime;
-    Graphics.update(nowTime, deltaTime)
+      Graphics.update(nowTime, deltaTime)
     }
 
     var fn = this.update.bind(this);

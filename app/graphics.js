@@ -601,7 +601,7 @@ function initShader(gl, shader, vertex_shader_script_id, fragment_shader_script_
 *     FRAGMENT_SHADER.
 * @return {!WebGLShader} The shader.
 */
-function compileShader(gl, shaderSource, shaderType) {
+function compileShader(gl, scriptId, shaderSource, shaderType) {
   // Create the shader object
   var shader = gl.createShader(shaderType);
 
@@ -615,7 +615,7 @@ function compileShader(gl, shaderSource, shaderType) {
   var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
   if (!success) {
     // Something went wrong during compilation; get the error
-    throw "could not compile shader:" + gl.getShaderInfoLog(shader);
+    throw "could not compile shader (" + scriptId + "):" + gl.getShaderInfoLog(shader);
   }
 
   return shader;
@@ -653,7 +653,7 @@ function createShaderFromScript(gl, scriptId, opt_shaderType) {
     }
   }
 
-  return compileShader(gl, shaderSource, opt_shaderType);
+  return compileShader(gl, scriptId, shaderSource, opt_shaderType);
 };
 
 /**

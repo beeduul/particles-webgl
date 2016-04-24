@@ -2,6 +2,8 @@
 
 var Graphics = require('graphics');
 
+var FPSLimit = 30;
+
 var App = {
   last_time: undefined,
   
@@ -21,9 +23,12 @@ var App = {
   update: function() {
     var nowTime = Date.now() - this.start_time;
     var deltaTime = nowTime - this.last_time;
-    this.last_time = nowTime;
 
+    if (nowTime - this.last_time > 1000 / FPSLimit) {
+      this.last_time = nowTime;
     Graphics.update(nowTime, deltaTime)
+    }
+
     var fn = this.update.bind(this);
     window.requestAnimationFrame(fn);
   }

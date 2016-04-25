@@ -32,6 +32,10 @@ var App = {
     var fn = this.update.bind(this);
     window.requestAnimationFrame(fn);
   },
+  getSimulationParam: function(name) {
+    var data = Graphics.getSimulationParam(name);
+    return data;
+  },
 
   getSimulationValue: function(name) {
     var value = Graphics.getSimulationValue(name);

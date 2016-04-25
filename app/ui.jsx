@@ -3,15 +3,34 @@ var ReactDOM = require('react-dom');
 
 var app = require('app');
 
-var Slider = React.createClass({
-  
+var ParamsMixin = {
+  getParamValue: function() {
+    return app.getSimulationValue(this.props.param)
+  },
+
   handleOnInput: function(event) {
-    app.setSimulationValue('particleSize', event.target.value);
+    app.setSimulationValue(this.props.param, event.target.value);
+  }
+  
+};
+
+var Slider = React.createClass({  
+  mixins: [ParamsMixin],
+  
+  getParamMin: function() {
+    return app.getSimulationParam(this.props.param).min
+  },
+  
+  getParamMax: function() {
+    return app.getSimulationParam(this.props.param).max
   },
   
   render: function() {
     return (
-      <input class="slider" type="range" value={this.props.particleSize} min="1" max="50" onInput={this.handleOnInput}/>
+      <div className='parameter'>
+        <input className="slider" type="range" defaultValue={this.getParamValue()} min={this.getParamMin()} max={this.getParamMax()} onInput={this.handleOnInput}/>
+        <span className='title'>{this.props.param}</span>
+      </div>
     );
   }
 });
@@ -24,7 +43,12 @@ var UI = React.createClass({
   render: function() {
     return (
       <div id="ui">
-        <Slider particleSize={app.getSimulationValue('particleSize')}/>
+        <Slider param={'colorNoise'} />
+        <Slider param={'positionalNoise'} />
+        <Slider param={'directionalNoise'} />
+        <Slider param={'particleSize'} />
+        <Slider param={'particleLifetime'} />
+        <Slider param={'particleDensity'} />
       </div>
     )
   }

@@ -88,13 +88,39 @@ var Graphics = {
     current: undefined,
     previous: undefined,
     num_particles: 0,
-    
-    colorNoise: 0.1,
-    positionalNoise: 0.01, // percent of screen
-    directionalNoise: 0.0001,
-    particleSize: 3.0,
-    particleLifetime: 50000, // ms
-    numParticlesPerSecond: 100,
+
+    params: {
+      colorNoise: {
+        default: 0.1,
+        min: 0,
+        max: 0.5
+      },
+      positionalNoise: {
+        default: 0.01, // percent of screen
+        min: 0,
+        max: 0.5
+      },
+      directionalNoise: {
+        default: 0.0001,
+        min: 0,
+        max: 0.001
+      },
+      particleSize: {
+        default: 3.0,
+        min: 1,
+        max: 50
+      },
+      particleLifetime: {
+        default: 10000, // ms
+        min: 500,
+        max: 60000
+      },
+      particleDensity: {
+        default: 100,
+        min: 10,
+        max: 1000
+      }
+    },
     
     isInitialized: function() {
       return (this.current && this.previous);
@@ -213,13 +239,18 @@ var Graphics = {
       this.lastEvent = null;
     }
   },
+
+  getSimulationParam: function(name) {
+    return this.simulation.params[name];
+  },
   
   getSimulationValue: function(name) {
-    return this.simulation[name];
+    var param = this.getSimulationParam(name);
+    return param.value || param.default;
   },
   
   setSimulationValue: function(name, value) {
-    this.simulation[name] = value;
+    this.getSimulationParam(name).value = value;
   },
   
   addParticlesAt: function(px, py, rgb) {
@@ -229,7 +260,7 @@ var Graphics = {
     var shortBuf = new Float32Array(4 * 4);
   
     var birthCol = [];
-    var numToAdd = Math.floor(this.simulation.numParticlesPerSecond / this.deltaTime) + 1;
+    var numToAdd = Math.floor(this.getSimulationValue('particleDensity') / this.deltaTime) + 1;
     
     for (var p = 0; p < numToAdd; p++) {
       var t = p / numToAdd;
@@ -259,17 +290,17 @@ var Graphics = {
             y = py - (py - this.lastEvent.y) * t;
           }
           // particle position - x, y, z
-          shortBuf[0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise;
-          shortBuf[1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.simulation.positionalNoise;
+          shortBuf[0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.getSimulationValue('positionalNoise');
+          shortBuf[1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.getSimulationValue('positionalNoise');
           shortBuf[2] = 0.0;
           shortBuf[3] = 0.0;
           break;
 
         case 1:
           // birth particle color:  r, g, b
-          shortBuf[0] = birthCol[0] = clamp(rgb[0] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
-          shortBuf[1] = birthCol[1] = clamp(rgb[1] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
-          shortBuf[2] = birthCol[2] = clamp(rgb[2] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
+          shortBuf[0] = birthCol[0] = clamp(rgb[0] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
+          shortBuf[1] = birthCol[1] = clamp(rgb[1] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
+          shortBuf[2] = birthCol[2] = clamp(rgb[2] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
 
           // birth time
           shortBuf[3] = this.nowTime;
@@ -288,21 +319,21 @@ var Graphics = {
         
           var vectorStrengthMagicNumber = 50;
         
-          shortBuf[0] = dx + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
-          shortBuf[1] = dy + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
-          shortBuf[2] = dz + (2 * Math.random() - 1) * this.simulation.directionalNoise * vectorStrengthMagicNumber;
+          shortBuf[0] = dx + (2 * Math.random() - 1) * this.getSimulationValue('directionalNoise') * vectorStrengthMagicNumber;
+          shortBuf[1] = dy + (2 * Math.random() - 1) * this.getSimulationValue('directionalNoise') * vectorStrengthMagicNumber;
+          shortBuf[2] = dz + (2 * Math.random() - 1) * this.getSimulationValue('directionalNoise') * vectorStrengthMagicNumber;
 
-          shortBuf[3] = this.simulation.particleSize;
+          shortBuf[3] = this.getSimulationValue('particleSize');
           break;
 
         case 3:
           // death particle color:  r, g, b
-          shortBuf[0] = clamp(1.0 - birthCol[0] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
-          shortBuf[1] = clamp(1.0 - birthCol[1] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
-          shortBuf[2] = clamp(1.0 - birthCol[2] + (2 * Math.random() - 1) * this.simulation.colorNoise, 0, 1);
+          shortBuf[0] = clamp(1.0 - birthCol[0] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
+          shortBuf[1] = clamp(1.0 - birthCol[1] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
+          shortBuf[2] = clamp(1.0 - birthCol[2] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
 
           // death time
-          shortBuf[3] = this.nowTime + this.simulation.particleLifetime; // ms
+          shortBuf[3] = this.nowTime + this.getSimulationValue('particleLifetime'); // ms
           break;
         }
 

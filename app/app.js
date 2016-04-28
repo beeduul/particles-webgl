@@ -39,7 +39,6 @@ var App = {
 
   getSimulationValue: function(name) {
     var value = Graphics.getSimulationValue(name);
-    console.log("getSimulationValue ", name, value);
     return value;
   },
 

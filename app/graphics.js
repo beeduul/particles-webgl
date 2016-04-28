@@ -296,17 +296,19 @@ var Graphics = {
             y = py - (py - this.lastEvent.y) * t;
           }
           // particle position - x, y, z
-          shortBuf[0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * this.getSimulationValue('positionalNoise');
-          shortBuf[1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * this.getSimulationValue('positionalNoise');
+          var positionalNoise = this.getSimulationValue('positionalNoise');
+          shortBuf[0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
+          shortBuf[1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
           shortBuf[2] = 0.0;
           shortBuf[3] = 0.0;
           break;
 
         case 1:
           // birth particle color:  r, g, b
-          shortBuf[0] = birthCol[0] = clamp(rgb[0] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
-          shortBuf[1] = birthCol[1] = clamp(rgb[1] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
-          shortBuf[2] = birthCol[2] = clamp(rgb[2] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
+          var colorNoise = this.getSimulationValue('colorNoise');
+          shortBuf[0] = birthCol[0] = clamp(rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1);
+          shortBuf[1] = birthCol[1] = clamp(rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1);
+          shortBuf[2] = birthCol[2] = clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1);
 
           // birth time
           shortBuf[3] = this.nowTime;
@@ -323,11 +325,10 @@ var Graphics = {
             dy = (this.lastEvent.y - py) / this.height;
           }
         
-          var vectorStrengthMagicNumber = 50;
-        
-          shortBuf[0] = dx + (2 * Math.random() - 1) * this.getSimulationValue('directionalNoise') * vectorStrengthMagicNumber;
-          shortBuf[1] = dy + (2 * Math.random() - 1) * this.getSimulationValue('directionalNoise') * vectorStrengthMagicNumber;
-          shortBuf[2] = dz + (2 * Math.random() - 1) * this.getSimulationValue('directionalNoise') * vectorStrengthMagicNumber;
+          var directionalNoise = this.getSimulationValue('directionalNoise');
+          shortBuf[0] = dx + (2 * Math.random() - 1) * directionalNoise;
+          shortBuf[1] = dy + (2 * Math.random() - 1) * directionalNoise;
+          shortBuf[2] = dz + (2 * Math.random() - 1) * directionalNoise;
 
           shortBuf[3] = this.getSimulationValue('particleSize');
           break;

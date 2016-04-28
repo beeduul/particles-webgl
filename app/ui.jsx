@@ -3,32 +3,37 @@ var ReactDOM = require('react-dom');
 
 var app = require('app');
 
-var ParamsMixin = {
-  getParamValue: function() {
-    return app.getSimulationValue(this.props.param)
+var Slider = React.createClass({  
+  toSliderValue: function() {
+    var param = app.getSimulationParam(this.props.param);
+    var delta = param.max - param.min;
+    var simValue = app.getSimulationValue(this.props.param);
+    var value = (simValue - param.min) / delta * 100.0;
+    console.log(this.props.param, simValue, value, param)
+    return value;
   },
 
-  handleOnInput: function(event) {
-    app.setSimulationValue(this.props.param, event.target.value);
-  }
-  
-};
-
-var Slider = React.createClass({  
-  mixins: [ParamsMixin],
-  
   getParamMin: function() {
     return app.getSimulationParam(this.props.param).min
   },
-  
+
   getParamMax: function() {
     return app.getSimulationParam(this.props.param).max
   },
-  
+
+  handleOnInput: function(event) {
+    var param = app.getSimulationParam(this.props.param);
+    var delta = param.max - param.min;
+    var value = event.target.value / 100.0 * delta + param.min;
+
+    console.log("handleOnInput", this.props.param, event.target.value, value, param);
+    app.setSimulationValue(this.props.param, value);
+  },
+
   render: function() {
     return (
       <div className='parameter'>
-        <input className="slider" type="range" defaultValue={this.getParamValue()} min={this.getParamMin()} max={this.getParamMax()} onInput={this.handleOnInput}/>
+        <input className="slider" type="range" defaultValue={this.toSliderValue()} min='0' max='100' onInput={this.handleOnInput}/>
         <span className='title'>{this.props.param}</span>
       </div>
     );
@@ -43,12 +48,13 @@ var UI = React.createClass({
   render: function() {
     return (
       <div id="ui">
-        <Slider param={'colorNoise'} />
-        <Slider param={'positionalNoise'} />
-        <Slider param={'directionalNoise'} />
         <Slider param={'particleSize'} />
         <Slider param={'particleLifetime'} />
         <Slider param={'particleDensity'} />
+        <Slider param={'friction'} />
+        <Slider param={'positionalNoise'} />
+        <Slider param={'directionalNoise'} />
+        <Slider param={'colorNoise'} />
       </div>
     )
   }

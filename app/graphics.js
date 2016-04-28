@@ -30,13 +30,13 @@ var Graphics = {
         aUV: {},
       },
       uniforms: {
-        deltaTime: { value: null },
-        nowTime: { value: null },
+        deltaTime:    {},
+        nowTime:      {},
 
-        uTexture0:    { value: null },
-        uTexture1:    { value: null },
-        uTexture2:    { value: null },
-        uTexture3:    { value: null },
+        uTexture0:    {},
+        uTexture1:    {},
+        uTexture2:    {},
+        uTexture3:    {},
       }
     },
     particle_sim: {
@@ -45,17 +45,19 @@ var Graphics = {
       },
       uniforms: {
         uResolution:  { value: [SIMULATION_DIM, SIMULATION_DIM] },
-        deltaTime:    { value: null },
-        nowTime:      { value: null },
+        deltaTime:    {},
+        nowTime:      {},
         
-        uTexture0:    { value: null },
-        uTexture1:    { value: null },
-        uTexture2:    { value: null },
-        uTexture3:    { value: null },
-        gravityType:  { value: 1 }, // 0: point, 1: vector
-        gravityVal:   { value: [0,-0.01,0] },
-        gravityPower: { value: 100.0 },
-        friction:    { value: 0.999 }
+        uTexture0:    {},
+        uTexture1:    {},
+        uTexture2:    {},
+        uTexture3:    {},
+
+        gravityType:  { ui: 'checkbox', type: 'i', value: 0 } // 0: point, 1: vector
+      },
+      params: {
+        gravityVal:   { ui: 'range', value: [0,-0.1,0] },
+        friction:     { ui: 'range', default: 0.999, value: 0.999, min: 0, max: 1 }
       }
     }
   },
@@ -96,14 +98,14 @@ var Graphics = {
         max: 0.5
       },
       positionalNoise: {
-        default: 0.01, // percent of screen
+        default: 0, // percent of screen
         min: 0,
         max: 0.5
       },
       directionalNoise: {
-        default: 0.0001,
+        default: 0,
         min: 0,
-        max: 0.001
+        max: 0.1
       },
       particleSize: {
         default: 3.0,
@@ -241,7 +243,11 @@ var Graphics = {
   },
 
   getSimulationParam: function(name) {
-    return this.simulation.params[name];
+    if (this.simulation.params[name]) {
+      return this.simulation.params[name];
+    } else {
+      return this.shaders.particle_sim.params[name];
+    }
   },
   
   getSimulationValue: function(name) {
@@ -518,15 +524,22 @@ var Graphics = {
     gl.uniform1f(shader.uniforms.nowTime.location, this.nowTime);
     gl.uniform1f(shader.uniforms.deltaTime.location, this.deltaTime);
 
-    gl.uniform3f(shader.uniforms.gravityVal.location,
-      shader.uniforms.gravityVal.value[0],
-      shader.uniforms.gravityVal.value[1],
-      shader.uniforms.gravityVal.value[2]
-    );
-    
+    Object.keys(shader.params).forEach(function(key) {
+      var param = shader.params[key];
+      if (Array.isArray(param.value)) {
+        switch(param.value.length) {
+          case 1: gl.uniform1f(param.location, param.value[0]); break;
+          case 2: gl.uniform2f(param.location, param.value[0], param.value[1]); break;
+          case 3: gl.uniform3f(param.location, param.value[0], param.value[1], param.value[2]); break;
+          case 4: gl.uniform4f(param.location, param.value[0], param.value[1], param.value[2], param.value[3]); break;
+          default: throw ("unhandled length " + param.value.length)
+        }
+      } else {
+        gl.uniform1f(param.location, param.value);
+      }
+    });
+        
     gl.uniform1i(shader.uniforms.gravityType.location, shader.uniforms.gravityType.value);
-    gl.uniform1f(shader.uniforms.gravityPower.location, shader.uniforms.gravityPower.value);
-    gl.uniform1f(shader.uniforms.friction.location, shader.uniforms.friction.value);
 
     gl.uniform2f(shader.uniforms.uResolution.location,
       shader.uniforms.uResolution.value[0],
@@ -646,6 +659,10 @@ function initShader(gl, shader, vertex_shader_script_id, fragment_shader_script_
   for (var uniformName in shader.uniforms) {
     shader.uniforms[uniformName].location = gl.getUniformLocation(shader.program, uniformName);
     console.log("uniform: ", uniformName, ", location: ", shader.uniforms[uniformName].location);
+  }
+  for (var uniformName in shader.params) {
+    shader.params[uniformName].location = gl.getUniformLocation(shader.program, uniformName);
+    console.log("param: ", uniformName, ", location: ", shader.params[uniformName].location);
   }
 }
 

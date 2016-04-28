@@ -30,7 +30,6 @@
 
   uniform vec3 gravityVal;
   uniform int gravityType;
-  uniform float gravityPower;
   uniform float friction;
 
   uniform sampler2D uTexture0; // x, y, z
@@ -67,10 +66,12 @@
     
       vec3 velocity;
       if (gravityType == 0) {
-        vec3 gravityPull = (gravityVal - pdata0.xyz) / gravityPower;
+        // POINT
+        vec3 gravityPull = gravityVal * deltaTime / 1000.0;
         velocity = vec3(gravityPull + pdata2.xyz * friction);
       } else {
-        velocity = vec3(pdata2.xyz * friction + gravityVal);
+        // VECTOR
+        velocity = vec3(pdata2.xyz + gravityVal) * friction;
       }
 
       gl_FragData[2] = vec4(velocity, size);

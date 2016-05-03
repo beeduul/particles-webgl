@@ -51,11 +51,10 @@ var Graphics = {
         uTexture0:    {},
         uTexture1:    {},
         uTexture2:    {},
-        uTexture3:    {},
-
-        gravityType:  { ui: 'checkbox', type: 'i', value: 0 } // 0: point, 1: vector
+        uTexture3:    {}
       },
       params: {
+        gravityType:  { ui: 'checkbox', type: 'i', value: 0 }, // 0: point, 1: vector
         gravityVal:   { ui: 'range', value: [0,-0.1,0] },
         friction:     { ui: 'range', default: 0.999, value: 0.999, min: 0, max: 1 }
       }
@@ -536,11 +535,18 @@ var Graphics = {
           default: throw ("unhandled length " + param.value.length)
         }
       } else {
-        gl.uniform1f(param.location, param.value);
+        switch(param.type) {
+        case "i":
+          gl.uniform1i(param.location, param.value);
+          break;
+        default:
+          gl.uniform1f(param.location, param.value);
+          break;
+        }
       }
     });
         
-    gl.uniform1i(shader.uniforms.gravityType.location, shader.uniforms.gravityType.value);
+    gl.uniform1i(shader.params.gravityType.location, shader.params.gravityType.value);
 
     gl.uniform2f(shader.uniforms.uResolution.location,
       shader.uniforms.uResolution.value[0],

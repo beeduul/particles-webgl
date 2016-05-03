@@ -3,13 +3,28 @@ var ReactDOM = require('react-dom');
 
 var app = require('app');
 
+var Checkbox = React.createClass({
+  handleOnClick: function(event) {
+    var value = event.target.checked ? 1 : 0;
+    app.setSimulationValue(this.props.param, value);
+  },
+
+  render: function() {
+    return (
+      <div className='parameter'>
+        <input type = 'checkbox' onClick={this.handleOnClick} value={this.props.param.value} />
+        <span className='title'>{this.props.param}</span>
+      </div>
+    );
+  }
+});
+
 var Slider = React.createClass({  
   toSliderValue: function() {
     var param = app.getSimulationParam(this.props.param);
     var delta = param.max - param.min;
     var simValue = app.getSimulationValue(this.props.param);
     var value = (simValue - param.min) / delta * 100.0;
-    console.log(this.props.param, simValue, value, param)
     return value;
   },
 
@@ -55,6 +70,7 @@ var UI = React.createClass({
         <Slider param={'positionalNoise'} />
         <Slider param={'directionalNoise'} />
         <Slider param={'colorNoise'} />
+        <Checkbox param={'gravityType'} />
       </div>
     )
   }

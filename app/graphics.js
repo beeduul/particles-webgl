@@ -614,7 +614,7 @@ var Graphics = {
     gl.clearDepth(100000.0);
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
-    gl.depthFunc(gl.LESS);
+    gl.depthFunc(gl.LEQUAL);
     // Clear the color as well as the depth buffer.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 

@@ -67,11 +67,11 @@
       vec3 velocity;
       if (gravityType == 0) {
         // POINT
-        vec3 gravityPull = gravityVal * deltaTime / 1000.0;
-        velocity = vec3(gravityPull + pdata2.xyz * friction);
+        vec3 gravityPull = (gravityVal - pdata0.xyz) * deltaTime / 1000.0;
+        velocity = vec3((pdata2.xzy + gravityPull) * friction);
       } else {
         // VECTOR
-        velocity = vec3(pdata2.xyz + gravityVal) * friction;
+        velocity = vec3(pdata2.xyz + gravityVal) * deltaTime / 1000.0 * friction;
       }
 
       gl_FragData[2] = vec4(velocity, size);

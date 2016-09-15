@@ -259,118 +259,134 @@ var Graphics = {
   },
   
   addParticlesAt: function(px, py, rgb) {
-    var gl = this.gl;
     
-    var sim_width, sim_height; sim_width = sim_height = SIMULATION_DIM;
-    var shortBuf = new Float32Array(4 * 4);
-  
-    var birthCol = [];
     var numToAdd = Math.floor(this.getSimulationValue('particleDensity') / this.deltaTime) + 1;
-    
+
     for (var p = 0; p < numToAdd; p++) {
-      var t = p / numToAdd;
-      var num_particles = this.simulation.num_particles;
-      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-        var tx = this.simulation.previous.textures[tx_idx];
-        var aux_fb = this.simulation.previous.aux_frame_buffers[tx_idx];
-    
-        gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
 
-        var sim_x = num_particles % sim_width;
-        var sim_y = Math.floor(num_particles / sim_width);
-        if (sim_x == 0 && sim_y == SIMULATION_DIM) {
-          sim_y = 0;
-        }
+      var t = p / numToAdd; // t is interpolation value along mouse stroke
 
-        var spaceAvailable = sim_width - sim_x;
-
-        var base_index = num_particles * 4;
-
-        switch(tx_idx) {
-        case 0:
-          var x = px;
-          var y = px;
-          if (this.lastEvent) {
-            x = px - (px - this.lastEvent.x) * t;
-            y = py - (py - this.lastEvent.y) * t;
-          }
-          // particle position - x, y, z
-          var positionalNoise = this.getSimulationValue('positionalNoise');
-          shortBuf[0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
-          shortBuf[1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
-          shortBuf[2] = 0.0;
-          shortBuf[3] = 0.0;
-          break;
-
-        case 1:
-          // birth particle color:  r, g, b
-          var colorNoise = this.getSimulationValue('colorNoise');
-          shortBuf[0] = birthCol[0] = clamp(rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-          shortBuf[1] = birthCol[1] = clamp(rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-          shortBuf[2] = birthCol[2] = clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-
-          // birth time
-          shortBuf[3] = this.nowTime;
-
-          break;
-
-        case 2:
-          // dx, dy, dz, sz (particle size)
-          var dx = 0;
-          var dy = 0;
-          var dz = 0;
-          if (this.lastEvent) {
-            dx = (px - this.lastEvent.x) / this.width;
-            dy = (this.lastEvent.y - py) / this.height;
-          }
-        
-          var directionalNoise = this.getSimulationValue('directionalNoise');
-          shortBuf[0] = dx + (2 * Math.random() - 1) * directionalNoise;
-          shortBuf[1] = dy + (2 * Math.random() - 1) * directionalNoise;
-          shortBuf[2] = dz + (2 * Math.random() - 1) * directionalNoise;
-
-          shortBuf[3] = this.getSimulationValue('particleSize');
-          break;
-
-        case 3:
-          // death particle color:  r, g, b
-          shortBuf[0] = clamp(1.0 - birthCol[0] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
-          shortBuf[1] = clamp(1.0 - birthCol[1] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
-          shortBuf[2] = clamp(1.0 - birthCol[2] + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1);
-
-          // death time
-          shortBuf[3] = this.nowTime + this.getSimulationValue('particleLifetime'); // ms
-          break;
-        }
-
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, tx);
-
-        if (spaceAvailable < 4) {
-          gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, spaceAvailable, 1, gl.RGBA, gl.FLOAT, shortBuf);
-          var overflow = 4 - spaceAvailable;
-          var overBuf = new Float32Array(overflow * 4);
-          for (var i = 0; i < overBuf; i++) {
-            overBuf[i] = shortBuf[spaceAvailable + i];
-          }
-          var newY = (sim_y + 1) % sim_height;
-          gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, newY, overflow, 1, gl.RGBA, gl.FLOAT, overBuf);
-        } else {
-          gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, 4, 1, gl.RGBA, gl.FLOAT, shortBuf);
-        }
+      var x = px;
+      var y = px;
+      if (this.lastEvent) {
+        x = px - (px - this.lastEvent.x) * t;
+        y = py - (py - this.lastEvent.y) * t;
       }
+      var txArr = [[], [], [], []];
+      var positionalNoise = this.getSimulationValue('positionalNoise');
 
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  
-      this.simulation.num_particles += 1;
-      if (this.simulation.num_particles > sim_width * sim_height) {
-        this.simulation.num_particles = 0;
+      // px, py, pz, unused
+      txArr[0][0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
+      txArr[0][1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
+      txArr[0][2] = -1.0;
+      txArr[0][3] = 0.0;
+      
+      var colorNoise = this.getSimulationValue('colorNoise');      
+      var birthColor = {
+        r: clamp(rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1),
+        g: clamp(rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1),
+        b: clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1)
+      };
+      var birthTime = this.nowTime;
+
+      // birthColor r, g, b, birthTime
+      txArr[1][0] = birthColor.r;
+      txArr[1][1] = birthColor.g;
+      txArr[1][2] = birthColor.b;
+      txArr[1][3] = this.nowTime;
+      
+      var deathTime = birthTime + this.getSimulationValue('particleLifetime');
+      
+      var directionalNoise = this.getSimulationValue('directionalNoise');
+      var dx = 0;
+      var dy = 0;
+      var dz = 0;
+      if (this.lastEvent) {
+        dx = (px - this.lastEvent.x) / this.width;
+        dy = (this.lastEvent.y - py) / this.height;
+      }
+      var dir = {
+        x: dx + (2 * Math.random() - 1) * directionalNoise,
+        y: dy + (2 * Math.random() - 1) * directionalNoise,
+        z: dz + (2 * Math.random() - 1) * directionalNoise
       }
       
+      var particleSize = this.getSimulationValue('particleSize');
+      
+      txArr[2][0] = dir.x;
+      txArr[2][1] = dir.y;
+      txArr[2][2] = dir.z;
+      txArr[2][3] = particleSize;
+       
+      var deathColor = {
+        r: clamp(1.0 - birthColor.r + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),
+        g: clamp(1.0 - birthColor.g + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),
+        b: clamp(1.0 - birthColor.b + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1)
+      }
+      
+      txArr[3][0] = deathColor.r;
+      txArr[3][1] = deathColor.g;
+      txArr[3][2] = deathColor.b;
+      txArr[3][3] = deathTime;
+      
+      this.loadParticleOntoGPU(txArr);
     }
     
     this.lastEvent = { x: px, y: py };
+  },
+  
+  loadParticleOntoGPU: function(txArr) {
+    const shortBuf = new Float32Array(4 * 4);
+    var gl = this.gl;
+
+    const sim_width = SIMULATION_DIM;
+    const sim_height = SIMULATION_DIM;
+      
+    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+      var tx = this.simulation.previous.textures[tx_idx];
+      var aux_fb = this.simulation.previous.aux_frame_buffers[tx_idx];
+  
+      gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
+
+      var sim_x = this.simulation.num_particles % sim_width;
+      var sim_y = Math.floor(this.simulation.num_particles / sim_width);
+      if (sim_x == 0 && sim_y == SIMULATION_DIM) {
+        sim_y = 0;
+      }
+
+      var spaceAvailable = sim_width - sim_x;
+
+      var base_index = this.simulation.num_particles * 4;
+
+      for (var i = 0; i < 4; i++) {
+        shortBuf[i] = txArr[tx_idx][i];
+      }
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tx);
+
+      if (spaceAvailable < 4) {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, spaceAvailable, 1, gl.RGBA, gl.FLOAT, shortBuf);
+        var overflow = 4 - spaceAvailable;
+        var overBuf = new Float32Array(overflow * 4);
+        for (var i = 0; i < overBuf; i++) {
+          overBuf[i] = shortBuf[spaceAvailable + i];
+        }
+        var newY = (sim_y + 1) % sim_height;
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, newY, overflow, 1, gl.RGBA, gl.FLOAT, overBuf);
+      } else {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, 4, 1, gl.RGBA, gl.FLOAT, shortBuf);
+      }
+    }
+
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    this.simulation.num_particles += 1;
+    if (this.simulation.num_particles > sim_width * sim_height) {
+      this.simulation.num_particles = 0;
+    }
+    
   },
 
   update: function(nowTime, deltaTime) {

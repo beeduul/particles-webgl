@@ -1,5 +1,7 @@
 "use strict";
 
+var glMatrix = require('gl-matrix');
+
 var NUM_TEXTURES = 4;
 var SIMULATION_DIM = 128;
 
@@ -185,7 +187,7 @@ var Graphics = {
     this.canvas = canvas;
     this.onWindowResize();
 
-    this.lastEvent = null;
+    this.lastLoc = null;
 
     canvas.addEventListener("mousedown", function(event) {
       this.handleMouseEvent(event);
@@ -229,15 +231,15 @@ var Graphics = {
     if (event.type == "mousedown") {
       // event.preventDefault();
       this.rgb = [Math.random(), Math.random(), Math.random()]
-      this.addParticlesAt(event.x, event.y, this.rgb);
+      this.addParticlesAt(new glMatrix.vec2.fromValues(event.x, event.y), this.rgb);
     } else if (event.type == "mousemove") {
       // event.preventDefault();
       if (this.rgb) {
-        this.addParticlesAt(event.x, event.y, this.rgb);
+        this.addParticlesAt(new glMatrix.vec2.fromValues(event.x, event.y), this.rgb);
       }
     } else if (event.type == "mouseup") {
       this.rgb = null;
-      this.lastEvent = null;
+      this.lastLoc = null;
     }
   },
 
@@ -258,81 +260,99 @@ var Graphics = {
     this.getSimulationParam(name).value = value;
   },
   
-  addParticlesAt: function(px, py, rgb) {
+  addParticlesAt: function(loc, rgb) {
     
     var numToAdd = Math.floor(this.getSimulationValue('particleDensity') / this.deltaTime) + 1;
+    
+    // const center = [this.canvas.width / 2.0, this.canvas.height / 2.0];
+    console.log("loc", loc);
+    // var pLoc = glMatrix.vec2.fromValues(loc[0] - center[0], loc[1] - center[1]);
+    // var pAngle = Math.atan2(pLoc[0], pLoc[1]);
+    // console.log("pLoc, pAngle", pLoc, pAngle);
+    
+    // var numSymmetries = 1;
+    // for (var s = 0; s < numSymmetries; s++) {
+      for (var p = 0; p < numToAdd; p++) {
 
-    for (var p = 0; p < numToAdd; p++) {
+        var t = p / numToAdd; // t is interpolation value along mouse stroke
 
-      var t = p / numToAdd; // t is interpolation value along mouse stroke
+        // var newP = glMatrix.vec2.fromValues(Math.cos(pAngle), Math.sin(pAngle));
+        // glMatrix.vec2.scale(newP, newP, glMatrix.vec2.length(pLoc));
+        
+        var px = loc[0]; // newP[0];
+        var py = loc[1]; // newP[1];
 
-      var x = px;
-      var y = px;
-      if (this.lastEvent) {
-        x = px - (px - this.lastEvent.x) * t;
-        y = py - (py - this.lastEvent.y) * t;
-      }
-      var txArr = [[], [], [], []];
-      var positionalNoise = this.getSimulationValue('positionalNoise');
+        var x = px;
+        var y = py;
+        if (this.lastLoc) {
+          px = px - (px - this.lastLoc[0]) * t;
+          py = py - (py - this.lastLoc[1]) * t;
+        }
+        var txArr = [[], [], [], []];
+        var positionalNoise = this.getSimulationValue('positionalNoise');
 
-      // px, py, pz, unused
-      txArr[0][0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
-      txArr[0][1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
-      txArr[0][2] = -1.0;
-      txArr[0][3] = 0.0;
+        // px, py, pz, unused
+        txArr[0][0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
+        txArr[0][1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
+        txArr[0][2] = -1.0;
+        txArr[0][3] = 0.0;
       
-      var colorNoise = this.getSimulationValue('colorNoise');      
-      var birthColor = {
-        r: clamp(rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1),
-        g: clamp(rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1),
-        b: clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1)
-      };
-      var birthTime = this.nowTime;
+        var colorNoise = this.getSimulationValue('colorNoise');
+        var birthColor = {
+          r: clamp(rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1),
+          g: clamp(rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1),
+          b: clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1)
+        };
+        var birthTime = this.nowTime;
 
-      // birthColor r, g, b, birthTime
-      txArr[1][0] = birthColor.r;
-      txArr[1][1] = birthColor.g;
-      txArr[1][2] = birthColor.b;
-      txArr[1][3] = this.nowTime;
+        // birthColor r, g, b, birthTime
+        txArr[1][0] = birthColor.r;
+        txArr[1][1] = birthColor.g;
+        txArr[1][2] = birthColor.b;
+        txArr[1][3] = this.nowTime;
       
-      var deathTime = birthTime + this.getSimulationValue('particleLifetime');
+        var deathTime = birthTime + this.getSimulationValue('particleLifetime');
       
-      var directionalNoise = this.getSimulationValue('directionalNoise');
-      var dx = 0;
-      var dy = 0;
-      var dz = 0;
-      if (this.lastEvent) {
-        dx = (px - this.lastEvent.x) / this.width;
-        dy = (this.lastEvent.y - py) / this.height;
-      }
-      var dir = {
+        var directionalNoise = this.getSimulationValue('directionalNoise');
+        var dx = 0;
+        var dy = 0;
+        var dz = 0;
+        if (this.lastLoc) {
+          dx = (px - this.lastLoc[0]) / this.width;
+          dy = (this.lastLoc[1] - py) / this.height;
+        }
+        var dir = {
         x: dx + (2 * Math.random() - 1) * directionalNoise,
         y: dy + (2 * Math.random() - 1) * directionalNoise,
         z: dz + (2 * Math.random() - 1) * directionalNoise
-      }
+        }
       
-      var particleSize = this.getSimulationValue('particleSize');
+        var particleSize = this.getSimulationValue('particleSize');
       
-      txArr[2][0] = dir.x;
-      txArr[2][1] = dir.y;
-      txArr[2][2] = dir.z;
-      txArr[2][3] = particleSize;
+        txArr[2][0] = dir.x;
+        txArr[2][1] = dir.y;
+        txArr[2][2] = dir.z;
+        txArr[2][3] = particleSize;
        
-      var deathColor = {
-        r: clamp(1.0 - birthColor.r + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),
-        g: clamp(1.0 - birthColor.g + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),
-        b: clamp(1.0 - birthColor.b + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1)
+        var deathColor = {
+          r: clamp(1.0 - birthColor.r + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),
+          g: clamp(1.0 - birthColor.g + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),
+          b: clamp(1.0 - birthColor.b + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1)
+        }
+      
+        txArr[3][0] = deathColor.r;
+        txArr[3][1] = deathColor.g;
+        txArr[3][2] = deathColor.b;
+        txArr[3][3] = deathTime;
+      
+        this.loadParticleOntoGPU(txArr);
       }
       
-      txArr[3][0] = deathColor.r;
-      txArr[3][1] = deathColor.g;
-      txArr[3][2] = deathColor.b;
-      txArr[3][3] = deathTime;
+      // pAngle += Math.PI * 2.0 / numSymmetries;
       
-      this.loadParticleOntoGPU(txArr);
-    }
+    // }
     
-    this.lastEvent = { x: px, y: py };
+    this.lastLoc = [px, py];
   },
   
   loadParticleOntoGPU: function(txArr) {

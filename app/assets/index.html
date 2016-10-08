@@ -118,17 +118,15 @@
       float age = nowTime - birth;
       float age_t = age / lifetime;
       
-      // gl_PointSize = floor((1.0 - age_t) * 10.0) + 1.0;
-
-      if (age_t < 0.1) {
-        gl_PointSize = size * age_t * 10.0; //  / v3xyz.z;
+      const float fade_t = 0.1; // gt 0 && lt .5
+      if (age_t < fade_t) {
+        size *= age_t / fade_t;
       } else
-      if (age_t > 0.9) {
-        gl_PointSize = size * (1.0 - age_t) * 10.0; //  / v3xyz.z;
-      } else
-      {
-        gl_PointSize = size; // / v3xyz.z;
+      if (age_t > (1.0 - fade_t)) {
+        size *= (1.0 - age_t) / fade_t;
       }
+      
+      gl_PointSize = size;
     } 
     
     vUV = aUV;

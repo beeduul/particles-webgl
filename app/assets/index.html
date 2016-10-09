@@ -111,7 +111,7 @@
     float size = pdata2.w;
     
     if (birth == 0.0 || death > 0.0 && nowTime > death) {
-      gl_PointSize = 100.0;
+      gl_PointSize = 0.0;
     } else {
       
       float lifetime = death - birth;

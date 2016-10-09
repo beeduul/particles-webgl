@@ -118,10 +118,10 @@ var Graphics = {
         min: 500,
         max: 60000
       },
-      particleDensity: {
-        default: 100,
+      particleDensity: { // particles per second
+        default: 50,
         min: 10,
-        max: 1000
+        max: 250
       }
     },
     
@@ -188,6 +188,7 @@ var Graphics = {
     this.onWindowResize();
 
     this.lastLoc = null;
+    this.addAccumulator = 0;
 
     canvas.addEventListener("mousedown", function(event) {
       this.handleMouseEvent(event);
@@ -307,14 +308,24 @@ var Graphics = {
   
   addParticlesAt: function(loc, rgb) {
     
-    var numToAdd = Math.floor(this.getSimulationValue('particleDensity') / this.deltaTime) + 1;
+    this.addAccumulator += this.getSimulationValue('particleDensity') * (this.deltaTime / 1000);
+
+    if (this.addAccumulator < 1)
+      return;
+    
+    var numToAdd = Math.floor(this.addAccumulator);
+    this.addAccumulator = 0;
     
     // const center = [this.canvas.width / 2.0, this.canvas.height / 2.0];
-    console.log("loc", loc);
     // var pLoc = glMatrix.vec2.fromValues(loc[0] - center[0], loc[1] - center[1]);
     // var pAngle = Math.atan2(pLoc[0], pLoc[1]);
     // console.log("pLoc, pAngle", pLoc, pAngle);
-    
+
+    var dragVector = glMatrix.vec2.fromValues(0, 0);
+    if (this.lastLoc) {
+      glMatrix.vec2.sub(dragVector, loc, this.lastLoc);
+    }
+
     // var numSymmetries = 1;
     // for (var s = 0; s < numSymmetries; s++) {
       for (var p = 0; p < numToAdd; p++) {
@@ -324,22 +335,19 @@ var Graphics = {
         // var newP = glMatrix.vec2.fromValues(Math.cos(pAngle), Math.sin(pAngle));
         // glMatrix.vec2.scale(newP, newP, glMatrix.vec2.length(pLoc));
         
-        var px = loc[0]; // newP[0];
-        var py = loc[1]; // newP[1];
+        var dragVector_t = glMatrix.vec2.create();
+        glMatrix.vec2.scale(dragVector_t, dragVector, t);
 
-        var x = px;
-        var y = py;
-        if (this.lastLoc) {
-          px = px - (px - this.lastLoc[0]) * t;
-          py = py - (py - this.lastLoc[1]) * t;
-        }
+        var thisPart = glMatrix.vec2.create();
+        glMatrix.vec2.add(thisPart, loc, dragVector_t);
+
         var txArr = [[], [], [], []];
         var positionalNoise = this.getSimulationValue('positionalNoise');
 
         // px, py, pz, unused
-        txArr[0][0] = (x / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
-        txArr[0][1] = (y / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
-        txArr[0][2] = -1.0;
+        txArr[0][0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
+        txArr[0][1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
+        txArr[0][2] = 0; // -1.0;
         txArr[0][3] = 0.0;
       
         var colorNoise = this.getSimulationValue('colorNoise');
@@ -363,8 +371,8 @@ var Graphics = {
         var dy = 0;
         var dz = 0;
         if (this.lastLoc) {
-          dx = (px - this.lastLoc[0]) / this.width;
-          dy = (this.lastLoc[1] - py) / this.height;
+          dx = dragVector[0] / this.width * 100;
+          dy = dragVector[1] / this.height * 100;
         }
         var dir = {
         x: dx + (2 * Math.random() - 1) * directionalNoise,
@@ -397,7 +405,7 @@ var Graphics = {
       
     // }
     
-    this.lastLoc = [px, py];
+    this.lastLoc = loc;
   },
   
   loadParticleOntoGPU: function(txArr) {

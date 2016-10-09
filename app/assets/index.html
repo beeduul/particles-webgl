@@ -101,15 +101,15 @@
     vec4 pdata3 = texture2D(uTexture3, aUV);
 
     vec3 v3xyz = pdata0.xyz;
-    
-    
+
     gl_Position = vec4(v3xyz, 1.0);
 
     float birth = pdata1.w;
     float death = pdata3.w;
-    
+
     float size = pdata2.w;
-    
+    // float size = pdata2.w * (2.0 + v3xyz.z) / 0.5; // scale 1..-1 to 1.0 and multiply by size
+
     if (birth == 0.0 || death > 0.0 && nowTime > death) {
       gl_PointSize = 0.0;
     } else {

@@ -109,9 +109,9 @@ var Graphics = {
         max: 0.1
       },
       particleSize: {
-        default: 3.0,
+        default: 25.0,
         min: 1,
-        max: 50
+        max: 100
       },
       particleLifetime: {
         default: 10000, // ms

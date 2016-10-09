@@ -372,7 +372,7 @@ var Graphics = {
         var dz = 0;
         if (this.lastLoc) {
           dx = dragVector[0] / this.width * 100;
-          dy = dragVector[1] / this.height * 100;
+          dy = -dragVector[1] / this.height * 100;
         }
         var dir = {
         x: dx + (2 * Math.random() - 1) * directionalNoise,

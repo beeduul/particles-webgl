@@ -56,9 +56,9 @@ var Graphics = {
         uTexture3:    {}
       },
       params: {
-        gravityType:  { ui: 'checkbox', type: 'i', value: 0 }, // 0: point, 1: vector
-        gravityVal:   { ui: 'range', value: [0,-0.1,0] },
-        friction:     { ui: 'range', default: 0.999, value: 0.999, min: 0, max: 1 }
+        gravityType:  { ui: 'checkbox', type: 'i', value: 1 }, // 0: point, 1: vector
+        gravityVal:   { ui: 'range', value: [0,-1,0] },
+        friction:     { ui: 'range', default: 0.999, value: 0.999, min: 0.75, max: 1 }
       }
     }
   },

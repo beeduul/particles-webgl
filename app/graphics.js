@@ -583,6 +583,8 @@ var Graphics = {
     var draw_buffers_ext = this.webgl_extensions.draw_buffers_ext;
     draw_buffers_ext.drawBuffersWEBGL(this.simulation.color_attachments);
 
+    gl.viewport(0, 0, SIMULATION_DIM, SIMULATION_DIM);
+
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.blendFunc(gl.ONE, gl.ZERO);  // so alpha output color draws correctly
 

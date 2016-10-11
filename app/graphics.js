@@ -3,7 +3,7 @@
 var glMatrix = require('gl-matrix');
 
 var NUM_TEXTURES = 4;
-var SIMULATION_DIM = 128;
+var SIMULATION_DIM = 256;
 
 function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));

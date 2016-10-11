@@ -57,7 +57,7 @@ var Graphics = {
       },
       params: {
         gravityType:  { ui: 'checkbox', type: 'i', value: 1 }, // 0: point, 1: vector
-        gravityVal:   { ui: 'range', value: [0,-1,0] },
+        gravityVal:   { ui: 'range', value: [0,-1] },
         friction:     { ui: 'range', default: 0.999, value: 0.999, min: 0.75, max: 1 }
       }
     }
@@ -363,7 +363,7 @@ var Graphics = {
         var txArr = [[], [], [], []];
         var positionalNoise = this.getSimulationValue('positionalNoise');
 
-        // px, py, pz, unused
+        // px, py, unused, unused
         txArr[0][0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
         txArr[0][1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
         txArr[0][2] = 0; // -1.0;
@@ -388,22 +388,20 @@ var Graphics = {
         var directionalNoise = this.getSimulationValue('directionalNoise');
         var dx = 0;
         var dy = 0;
-        var dz = 0;
         if (this.lastLoc) {
           dx = dragVector[0] / this.width * 100;
           dy = -dragVector[1] / this.height * 100;
         }
         var dir = {
         x: dx + (2 * Math.random() - 1) * directionalNoise,
-        y: dy + (2 * Math.random() - 1) * directionalNoise,
-        z: dz + (2 * Math.random() - 1) * directionalNoise
+        y: dy + (2 * Math.random() - 1) * directionalNoise
         }
       
         var particleSize = this.getSimulationValue('particleSize');
       
         txArr[2][0] = dir.x;
         txArr[2][1] = dir.y;
-        txArr[2][2] = dir.z;
+        txArr[2][2] = 0; // unused
         txArr[2][3] = particleSize;
        
         var deathColor = {

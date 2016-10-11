@@ -66,6 +66,7 @@ var UI = React.createClass({
         <Slider param={'particleSize'} />
         <Slider param={'particleLifetime'} />
         <Slider param={'particleDensity'} />
+        <Slider param={'symmetry'} />
         <Slider param={'friction'} />
         <Slider param={'positionalNoise'} />
         <Slider param={'directionalNoise'} />

@@ -93,6 +93,11 @@ var Graphics = {
     num_particles: 0,
 
     params: {
+      symmetry: {
+        default: 1,
+        min: 1,
+        max: 16
+      },
       colorNoise: {
         default: 0.1,
         min: 0,
@@ -316,30 +321,44 @@ var Graphics = {
     var numToAdd = Math.floor(this.addAccumulator);
     this.addAccumulator = 0;
     
-    // const center = [this.canvas.width / 2.0, this.canvas.height / 2.0];
-    // var pLoc = glMatrix.vec2.fromValues(loc[0] - center[0], loc[1] - center[1]);
-    // var pAngle = Math.atan2(pLoc[0], pLoc[1]);
-    // console.log("pLoc, pAngle", pLoc, pAngle);
+    const center = glMatrix.vec2.fromValues(this.canvas.width / 2.0, this.canvas.height / 2.0);
+    var pVec = glMatrix.vec2.create();
+    glMatrix.vec2.sub(pVec, loc, center);
+    
+    var pAngle = Math.atan2(pVec[1], pVec[0]);
 
-    var dragVector = glMatrix.vec2.fromValues(0, 0);
-    if (this.lastLoc) {
-      glMatrix.vec2.sub(dragVector, loc, this.lastLoc);
-    }
+    var pLastVec = glMatrix.vec2.create();
+    glMatrix.vec2.sub(pLastVec, this.lastLoc || loc, center);
+    
+    var pLastAngle = Math.atan2(pLastVec[1], pLastVec[0]);
 
-    // var numSymmetries = 1;
-    // for (var s = 0; s < numSymmetries; s++) {
+    var numSymmetries = Math.ceil(this.getSimulationValue('symmetry'));
+    for (var s = 0; s < numSymmetries; s++) {
+
+      // console.log("s:", s, "pVec:", pVec, "pAngle:", pAngle, "pLastVec:", pLastVec, "pLastAngle:", pLastAngle);
+
+      var symP = glMatrix.vec2.fromValues(Math.cos(pAngle), Math.sin(pAngle));
+      glMatrix.vec2.scale(symP, symP, glMatrix.vec2.length(pVec));
+      glMatrix.vec2.add(symP, symP, center);
+
+      var lastSymP = glMatrix.vec2.fromValues(Math.cos(pLastAngle), Math.sin(pLastAngle));
+      glMatrix.vec2.scale(lastSymP, lastSymP, glMatrix.vec2.length(pLastVec));
+      glMatrix.vec2.add(lastSymP, lastSymP, center);
+      
+      var dragVector = glMatrix.vec2.fromValues(0, 0);
+      glMatrix.vec2.sub(dragVector, symP, lastSymP);
+
+      // console.log("dragVector:", dragVector, "symP:", symP, "lastSymP:", lastSymP);
+
       for (var p = 0; p < numToAdd; p++) {
 
         var t = p / numToAdd; // t is interpolation value along mouse stroke
 
-        // var newP = glMatrix.vec2.fromValues(Math.cos(pAngle), Math.sin(pAngle));
-        // glMatrix.vec2.scale(newP, newP, glMatrix.vec2.length(pLoc));
-        
         var dragVector_t = glMatrix.vec2.create();
         glMatrix.vec2.scale(dragVector_t, dragVector, t);
 
         var thisPart = glMatrix.vec2.create();
-        glMatrix.vec2.add(thisPart, loc, dragVector_t);
+        glMatrix.vec2.add(thisPart, symP, dragVector_t);
 
         var txArr = [[], [], [], []];
         var positionalNoise = this.getSimulationValue('positionalNoise');
@@ -401,9 +420,10 @@ var Graphics = {
         this.loadParticleOntoGPU(txArr);
       }
       
-      // pAngle += Math.PI * 2.0 / numSymmetries;
+      pAngle += Math.PI * 2.0 / numSymmetries;
+      pLastAngle += Math.PI * 2.0 / numSymmetries;
       
-    // }
+    }
     
     this.lastLoc = loc;
   },

@@ -363,11 +363,19 @@ var Graphics = {
         var txArr = [[], [], [], []];
         var positionalNoise = this.getSimulationValue('positionalNoise');
 
-        // px, py, unused, unused
+        var directionalNoise = this.getSimulationValue('directionalNoise');
+        var dx = 0;
+        var dy = 0;
+        if (this.lastLoc) {
+          dx = dragVector[0] / this.width * 100;
+          dy = -dragVector[1] / this.height * 100;
+        }
+
+        // px, py, dx, dy
         txArr[0][0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
         txArr[0][1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
-        txArr[0][2] = 0; // -1.0;
-        txArr[0][3] = 0.0;
+        txArr[0][2] = dx + (2 * Math.random() - 1) * directionalNoise;
+        txArr[0][3] = dy + (2 * Math.random() - 1) * directionalNoise;
       
         var colorNoise = this.getSimulationValue('colorNoise');
         var birthColor = {
@@ -384,23 +392,11 @@ var Graphics = {
         txArr[1][3] = this.nowTime;
       
         var deathTime = birthTime + this.getSimulationValue('particleLifetime');
-      
-        var directionalNoise = this.getSimulationValue('directionalNoise');
-        var dx = 0;
-        var dy = 0;
-        if (this.lastLoc) {
-          dx = dragVector[0] / this.width * 100;
-          dy = -dragVector[1] / this.height * 100;
-        }
-        var dir = {
-        x: dx + (2 * Math.random() - 1) * directionalNoise,
-        y: dy + (2 * Math.random() - 1) * directionalNoise
-        }
-      
+
         var particleSize = this.getSimulationValue('particleSize');
       
-        txArr[2][0] = dir.x;
-        txArr[2][1] = dir.y;
+        txArr[2][0] = 0; // unused
+        txArr[2][1] = 0; // unused
         txArr[2][2] = 0; // unused
         txArr[2][3] = particleSize;
        

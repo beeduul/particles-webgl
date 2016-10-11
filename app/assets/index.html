@@ -32,9 +32,9 @@
   uniform int gravityType;
   uniform float friction;
 
-  uniform sampler2D uTexture0; // x, y
+  uniform sampler2D uTexture0; // x, y, dx, dy
   uniform sampler2D uTexture1; // birth r, g, b, time
-  uniform sampler2D uTexture2; // dx, dy, sz
+  uniform sampler2D uTexture2; // n/a, n/a, n/a sz
   uniform sampler2D uTexture3; // death r, g, b, time
 
   void main() {
@@ -55,27 +55,27 @@
       gl_FragData[3] = vec4(0.0);
     } else {
 
+      vec2 pos = pdata0.xy;
+      vec2 velocity = pdata0.zw;
+
       float lifetime = death - birth;
       float age = nowTime - birth;
       float age_t = age / lifetime;
       float size = pdata2.w;
 
-      vec2 velocity = pdata2.xy;
-
-      vec2 pos = pdata0.xy + velocity * deltaTime / 1000.0;
-      gl_FragData[0] = vec4(pos, 0.0, pdata0.w);
-      gl_FragData[1] = pdata1;
-    
       if (gravityType == 0) {
         // POINT
-        vec2 gravityPull = normalize(gravityVal - pdata0.xy) * deltaTime / 1000.0;
+        vec2 gravityPull = normalize(gravityVal - pos) * deltaTime / 1000.0;
         velocity = vec2((velocity + gravityPull) * friction);
       } else {
         // VECTOR
         velocity = vec2(velocity + gravityVal) * deltaTime / 1000.0 * friction;
       }
 
-      gl_FragData[2] = vec4(velocity, 0.0, size);
+      pos = pos + velocity * deltaTime / 1000.0;
+      gl_FragData[0] = vec4(pos, velocity);
+      gl_FragData[1] = pdata1;
+      gl_FragData[2] = vec4(0.0, 0.0, 0.0, size);
       gl_FragData[3] = pdata3;
     }
   }
@@ -89,9 +89,9 @@
   uniform float nowTime;
   uniform float deltaTime;
 
-  uniform sampler2D uTexture0; // x, y
+  uniform sampler2D uTexture0; // x, y, dx, dy
   uniform sampler2D uTexture1; // birth r, g, b, time
-  uniform sampler2D uTexture2; // dx, dy, unused, sz
+  uniform sampler2D uTexture2; // n/a, n/a, n/a, sz
   uniform sampler2D uTexture3; // death r, g, b, time
   
   void main() {
@@ -100,9 +100,9 @@
     vec4 pdata2 = texture2D(uTexture2, aUV);
     vec4 pdata3 = texture2D(uTexture3, aUV);
 
-    vec2 v2xy = pdata0.xy;
+    vec2 pos = pdata0.xy;
 
-    gl_Position = vec4(v2xy, 0.0, 1.0);
+    gl_Position = vec4(pos, 0.0, 1.0);
 
     float birth = pdata1.w;
     float death = pdata3.w;

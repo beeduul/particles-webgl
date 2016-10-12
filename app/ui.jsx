@@ -68,6 +68,7 @@ var UI = React.createClass({
         <Slider param={'particleDensity'} />
         <Slider param={'symmetry'} />
         <Slider param={'friction'} />
+        <Slider param={'pulseFrequency'} />
         <Slider param={'positionalNoise'} />
         <Slider param={'directionalNoise'} />
         <Slider param={'colorNoise'} />

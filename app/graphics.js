@@ -2,7 +2,7 @@
 
 var glMatrix = require('gl-matrix');
 
-var NUM_TEXTURES = 4;
+var NUM_TEXTURES = 5;
 var SIMULATION_DIM = 256;
 
 function clamp(val, min, max) {
@@ -39,6 +39,7 @@ var Graphics = {
         uTexture1:    {},
         uTexture2:    {},
         uTexture3:    {},
+        uTexture4:    {},
       }
     },
     particle_sim: {
@@ -53,7 +54,8 @@ var Graphics = {
         uTexture0:    {},
         uTexture1:    {},
         uTexture2:    {},
-        uTexture3:    {}
+        uTexture3:    {},
+        uTexture4:    {},
       },
       params: {
         gravityType:  { ui: 'checkbox', type: 'i', value: 1 }, // 0: point, 1: vector
@@ -122,6 +124,11 @@ var Graphics = {
         default: 10000, // ms
         min: 500,
         max: 60000
+      },
+      pulseFrequency: {
+        default: 0, // pulses per second
+        min: 0,
+        max: 2.0
       },
       particleDensity: { // particles per second
         default: 50,
@@ -360,7 +367,10 @@ var Graphics = {
         var thisPart = glMatrix.vec2.create();
         glMatrix.vec2.add(thisPart, symP, dragVector_t);
 
-        var txArr = [[], [], [], []];
+        var txArr = [];
+        for (var n = 0; n < NUM_TEXTURES; n++) {
+          txArr.push([]);
+        }
         var positionalNoise = this.getSimulationValue('positionalNoise');
 
         var directionalNoise = this.getSimulationValue('directionalNoise');
@@ -384,11 +394,10 @@ var Graphics = {
           b: clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1)
         };
 
-        var particleSize = this.getSimulationValue('particleSize');      
-        txArr[1][0] = 0; // unused
-        txArr[1][1] = 0; // unused
-        txArr[1][2] = 0; // unused
-        txArr[1][3] = particleSize;
+        txArr[1][0] = 0; // accel
+        txArr[1][1] = 0; // decay
+        txArr[1][2] = 0; // n/a
+        txArr[1][3] = 0; // n/a
 
         // birthColor r, g, b, birthTime
         var birthTime = this.nowTime;
@@ -408,6 +417,15 @@ var Graphics = {
         txArr[3][1] = deathColor.g;
         txArr[3][2] = deathColor.b;
         txArr[3][3] = deathTime;
+
+        var particleSize = this.getSimulationValue('particleSize');
+        const sizeScaleFactor = 0.5;
+        particleSize = particleSize + particleSize * (2 * Math.random() - 1) * sizeScaleFactor;
+
+        txArr[4][0] = particleSize;
+        txArr[4][1] = this.getSimulationValue("pulseFrequency");
+        txArr[4][2] = 0; // n/a
+        txArr[4][3] = 0; // n/a
       
         this.loadParticleOntoGPU(txArr);
       }

@@ -383,23 +383,21 @@ var Graphics = {
           g: clamp(rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1),
           b: clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1)
         };
-        var birthTime = this.nowTime;
+
+        var particleSize = this.getSimulationValue('particleSize');      
+        txArr[1][0] = 0; // unused
+        txArr[1][1] = 0; // unused
+        txArr[1][2] = 0; // unused
+        txArr[1][3] = particleSize;
 
         // birthColor r, g, b, birthTime
-        txArr[1][0] = birthColor.r;
-        txArr[1][1] = birthColor.g;
-        txArr[1][2] = birthColor.b;
-        txArr[1][3] = this.nowTime;
+        var birthTime = this.nowTime;
+        txArr[2][0] = birthColor.r;
+        txArr[2][1] = birthColor.g;
+        txArr[2][2] = birthColor.b;
+        txArr[2][3] = birthTime;
       
-        var deathTime = birthTime + this.getSimulationValue('particleLifetime');
-
-        var particleSize = this.getSimulationValue('particleSize');
-      
-        txArr[2][0] = 0; // unused
-        txArr[2][1] = 0; // unused
-        txArr[2][2] = 0; // unused
-        txArr[2][3] = particleSize;
-       
+        var deathTime = birthTime + this.getSimulationValue('particleLifetime');       
         var deathColor = {
           r: clamp(1.0 - birthColor.r + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),
           g: clamp(1.0 - birthColor.g + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),

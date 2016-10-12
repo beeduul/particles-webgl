@@ -371,8 +371,9 @@ var Graphics = {
         for (var n = 0; n < NUM_TEXTURES; n++) {
           txArr.push([]);
         }
-        var positionalNoise = this.getSimulationValue('positionalNoise');
 
+        // px, py, dx, dy
+        var positionalNoise = this.getSimulationValue('positionalNoise');
         var directionalNoise = this.getSimulationValue('directionalNoise');
         var dx = 0;
         var dy = 0;
@@ -380,53 +381,39 @@ var Graphics = {
           dx = dragVector[0] / this.width * 100;
           dy = -dragVector[1] / this.height * 100;
         }
-
-        // px, py, dx, dy
         txArr[0][0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
         txArr[0][1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
         txArr[0][2] = dx + (2 * Math.random() - 1) * directionalNoise;
         txArr[0][3] = dy + (2 * Math.random() - 1) * directionalNoise;
-      
-        var colorNoise = this.getSimulationValue('colorNoise');
-        var birthColor = {
-          r: clamp(rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1),
-          g: clamp(rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1),
-          b: clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1)
-        };
 
-        txArr[1][0] = 0; // accel
-        txArr[1][1] = 0; // decay
-        txArr[1][2] = 0; // n/a
-        txArr[1][3] = 0; // n/a
+        // accel, decay, n/a, n/a
+        txArr[1][0] = 0;
+        txArr[1][1] = 0;
+        txArr[1][2] = 0;
+        txArr[1][3] = 0;
 
         // birthColor r, g, b, birthTime
-        var birthTime = this.nowTime;
-        txArr[2][0] = birthColor.r;
-        txArr[2][1] = birthColor.g;
-        txArr[2][2] = birthColor.b;
-        txArr[2][3] = birthTime;
+        var colorNoise = this.getSimulationValue('colorNoise');
+        txArr[2][0] = clamp(rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1);
+        txArr[2][1] = clamp(rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1);
+        txArr[2][2] = clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1);
+        txArr[2][3] = this.nowTime;
       
-        var deathTime = birthTime + this.getSimulationValue('particleLifetime');       
-        var deathColor = {
-          r: clamp(1.0 - birthColor.r + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),
-          g: clamp(1.0 - birthColor.g + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1),
-          b: clamp(1.0 - birthColor.b + (2 * Math.random() - 1) * this.getSimulationValue('colorNoise'), 0, 1)
-        }
-      
-        txArr[3][0] = deathColor.r;
-        txArr[3][1] = deathColor.g;
-        txArr[3][2] = deathColor.b;
-        txArr[3][3] = deathTime;
+        // deathcolor r, g, b, deathTime
+        txArr[3][0] = clamp(1.0 - rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1);
+        txArr[3][1] = clamp(1.0 - rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1);
+        txArr[3][2] = clamp(1.0 - rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1);
+        txArr[3][3] = this.nowTime + this.getSimulationValue('particleLifetime');
 
+        // size, pulse frequency, n/a, n/a
         var particleSize = this.getSimulationValue('particleSize');
         const sizeScaleFactor = 0.5;
         particleSize = particleSize + particleSize * (2 * Math.random() - 1) * sizeScaleFactor;
-
         txArr[4][0] = particleSize;
         txArr[4][1] = this.getSimulationValue("pulseFrequency");
-        txArr[4][2] = 0; // n/a
-        txArr[4][3] = 0; // n/a
-      
+        txArr[4][2] = 0;
+        txArr[4][3] = 0;
+
         this.loadParticleOntoGPU(txArr);
       }
       

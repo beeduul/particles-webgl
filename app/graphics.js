@@ -319,7 +319,12 @@ var Graphics = {
   },
   
   addParticlesAt: function(loc, rgb) {
-    
+
+    var txArr = [];
+    for (var n = 0; n < NUM_TEXTURES; n++) {
+      txArr.push([]);
+    }
+
     this.addAccumulator += this.getSimulationValue('particleDensity') * (this.deltaTime / 1000);
 
     if (this.addAccumulator < 1)
@@ -366,11 +371,6 @@ var Graphics = {
 
         var thisPart = glMatrix.vec2.create();
         glMatrix.vec2.add(thisPart, symP, dragVector_t);
-
-        var txArr = [];
-        for (var n = 0; n < NUM_TEXTURES; n++) {
-          txArr.push([]);
-        }
 
         // px, py, dx, dy
         var positionalNoise = this.getSimulationValue('positionalNoise');

@@ -311,7 +311,7 @@ var Graphics = {
   
   getSimulationValue: function(name) {
     var param = this.getSimulationParam(name);
-    return param.value || param.default;
+    return param.hasOwnProperty('value') ? param.value : param.default;
   },
   
   setSimulationValue: function(name, value) {

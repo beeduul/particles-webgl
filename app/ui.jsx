@@ -67,14 +67,14 @@ var UI = React.createClass({
         <Slider param={'particleLifetime'} />
         <Slider param={'particleDensity'} />
         <Slider param={'symmetry'} />
-        <Slider param={'friction'} />
         <Slider param={'pulseFrequency'} />
         <Slider param={'positionalNoise'} />
         <Slider param={'directionalNoise'} />
         <Slider param={'colorNoise'} />
-        <Checkbox param={'gravityType'} />
         <Slider param={'colorHue'} />
         <Slider param={'saturation'} />
+        <Slider param={'accel'} />
+        <Slider param={'decay'} />
       </div>
     )
   }

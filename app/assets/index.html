@@ -28,8 +28,6 @@
   uniform float nowTime;
   uniform float deltaTime;
 
-  uniform vec2 gravityVal;
-  uniform int gravityType;
   uniform float friction;
 
   uniform sampler2D uTexture0; // x, y, dx, dy
@@ -66,18 +64,15 @@
       float age_t = age / lifetime;
       float size = pdata4.x;
 
-      if (gravityType == 0) {
-        // POINT
-        vec2 gravityPull = normalize(gravityVal - pos) * deltaTime / 1000.0;
-        velocity = vec2((velocity + gravityPull) * friction);
-      } else {
-        // VECTOR
-        velocity = vec2(velocity + gravityVal) * deltaTime / 1000.0 * friction;
-      }
+      vec2 accel = pdata1.xy;
+      float decay = pdata1.z;
+      pos += velocity * deltaTime / 1000.0;
+      velocity *= decay * deltaTime / 1000.0;
+      velocity += accel * deltaTime / 1000.0;
+      accel *= decay;
 
-      pos = pos + velocity * deltaTime / 1000.0;
       gl_FragData[0] = vec4(pos, velocity);
-      gl_FragData[1] = pdata1;
+      gl_FragData[1] = vec4(accel, pdata1.zw);
       gl_FragData[2] = pdata2;
       gl_FragData[3] = pdata3;
       gl_FragData[4] = pdata4;

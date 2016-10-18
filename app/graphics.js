@@ -58,9 +58,6 @@ var Graphics = {
         uTexture4:    {},
       },
       params: {
-        gravityType:  { ui: 'checkbox', type: 'i', value: 1 }, // 0: point, 1: vector
-        gravityVal:   { ui: 'range', value: [0,-1] },
-        friction:     { ui: 'range', default: 0.999, value: 0.999, min: 0.75, max: 1 }
       }
     }
   },
@@ -105,6 +102,8 @@ var Graphics = {
       particleLifetime: { default: 10000, min: 500,   max: 60000 }, // ms
       pulseFrequency:   { default: 0,     min: 0,     max: 2.0   },  // pulses per second
       particleDensity:  { default: 50,    min: 10,    max: 250   },  // particles per second
+      accel:            { default: -2.5,  min: -5,    max: 5     },
+      decay:            { default: 0.999, min: 0.95,  max: 1     }
     },
     
     isInitialized: function() {
@@ -323,8 +322,6 @@ var Graphics = {
     var numSymmetries = Math.ceil(this.getSimulationValue('symmetry'));
     for (var s = 0; s < numSymmetries; s++) {
 
-      // console.log("s:", s, "pVec:", pVec, "pAngle:", pAngle, "pLastVec:", pLastVec, "pLastAngle:", pLastAngle);
-
       var symP = glMatrix.vec2.fromValues(Math.cos(pAngle), Math.sin(pAngle));
       glMatrix.vec2.scale(symP, symP, glMatrix.vec2.length(pVec));
       glMatrix.vec2.add(symP, symP, center);
@@ -336,8 +333,6 @@ var Graphics = {
       var dragVector = glMatrix.vec2.fromValues(0, 0);
       glMatrix.vec2.sub(dragVector, symP, lastSymP);
 
-      // console.log("dragVector:", dragVector, "symP:", symP, "lastSymP:", lastSymP);
-
       for (var p = 0; p < numToAdd; p++) {
 
         var t = p / numToAdd; // t is interpolation value along mouse stroke
@@ -345,27 +340,37 @@ var Graphics = {
         var dragVector_t = glMatrix.vec2.create();
         glMatrix.vec2.scale(dragVector_t, dragVector, t);
 
-        var thisPart = glMatrix.vec2.create();
-        glMatrix.vec2.add(thisPart, symP, dragVector_t);
-
         // px, py, dx, dy
         var positionalNoise = this.getSimulationValue('positionalNoise');
+        var thisPart = glMatrix.vec2.create();
+        glMatrix.vec2.add(thisPart, symP, dragVector_t);
+        thisPart[0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
+        thisPart[1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
+        
         var directionalNoise = this.getSimulationValue('directionalNoise');
         var dx = 0;
         var dy = 0;
         if (this.lastLoc) {
-          dx = dragVector[0] / this.width * 100;
-          dy = -dragVector[1] / this.height * 100;
+          dx = dragVector[0] / this.width * 10;
+          dy = -dragVector[1] / this.height * 10;
         }
-        txArr[0][0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
-        txArr[0][1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
+
+        txArr[0][0] = thisPart[0];
+        txArr[0][1] = thisPart[1];
         txArr[0][2] = dx + (2 * Math.random() - 1) * directionalNoise;
         txArr[0][3] = dy + (2 * Math.random() - 1) * directionalNoise;
 
-        // accel, decay, n/a, n/a
-        txArr[1][0] = 0;
-        txArr[1][1] = 0;
-        txArr[1][2] = 0;
+        // accel.x, accel.y, decay, n/a -- "gravity" values
+        var accel = this.getSimulationValue('accel');
+
+        var thisAccel = glMatrix.vec2.clone(thisPart); // center gravity
+
+        // glMatrix.vec2.sub(thisAccel, thisPart, center);
+        glMatrix.vec2.normalize(thisAccel, thisAccel);
+        glMatrix.vec2.scale(thisAccel, thisAccel, accel);
+        txArr[1][0] = thisAccel[0];
+        txArr[1][1] = thisAccel[1];
+        txArr[1][2] = this.getSimulationValue('decay') - Math.random() * 0.05;
         txArr[1][3] = 0;
 
         // birthColor r, g, b, birthTime
@@ -630,8 +635,6 @@ var Graphics = {
       }
     });
         
-    gl.uniform1i(shader.params.gravityType.location, shader.params.gravityType.value);
-
     gl.uniform2f(shader.uniforms.uResolution.location,
       shader.uniforms.uResolution.value[0],
       shader.uniforms.uResolution.value[1]

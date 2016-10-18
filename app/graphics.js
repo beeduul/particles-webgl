@@ -170,6 +170,7 @@ var Graphics = {
 
     this.lastLoc = null;
     this.addAccumulator = 0;
+    this.accelAngle = Math.random() * Math.PI * 2.0;
 
     canvas.addEventListener("mousedown", function(event) {
       this.handleMouseEvent(event);
@@ -319,6 +320,11 @@ var Graphics = {
     
     var pLastAngle = Math.atan2(pLastVec[1], pLastVec[0]);
 
+    let wander = false;// this.getSimulationValue('wander');
+    if (wander) {
+      this.accelAngle += Math.random() * Math.PI * 2.0 / 100.0;
+    }
+
     var numSymmetries = Math.ceil(this.getSimulationValue('symmetry'));
     for (var s = 0; s < numSymmetries; s++) {
 
@@ -361,12 +367,15 @@ var Graphics = {
         txArr[0][3] = dy + (2 * Math.random() - 1) * directionalNoise;
 
         // accel.x, accel.y, decay, n/a -- "gravity" values
-        var accel = this.getSimulationValue('accel');
-
-        var thisAccel = glMatrix.vec2.clone(thisPart); // center gravity
-
-        // glMatrix.vec2.sub(thisAccel, thisPart, center);
+        var thisAccel;
+        if (wander) {
+          thisAccel = glMatrix.vec2.fromValues(Math.cos(this.accelAngle), Math.sin(this.accelAngle)); // wandering gravity direction
+        } else {
+          thisAccel = glMatrix.vec2.clone(thisPart); // center gravity
+          // glMatrix.vec2.sub(thisAccel, thisPart, center);
+        }
         glMatrix.vec2.normalize(thisAccel, thisAccel);
+        var accel = this.getSimulationValue('accel');
         glMatrix.vec2.scale(thisAccel, thisAccel, accel);
         txArr[1][0] = thisAccel[0];
         txArr[1][1] = thisAccel[1];

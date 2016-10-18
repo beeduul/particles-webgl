@@ -47,7 +47,7 @@ var Slider = React.createClass({
 
   render: function() {
     return (
-      <div className='parameter'>
+      <div className={'parameter ' + this.props.param}>
         <input className="slider" type="range" defaultValue={this.toSliderValue()} min='0' max='100' onInput={this.handleOnInput}/>
         <span className='title'>{this.props.param}</span>
       </div>

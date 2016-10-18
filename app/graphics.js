@@ -95,46 +95,14 @@ var Graphics = {
     num_particles: 0,
 
     params: {
-      symmetry: {
-        default: 1,
-        min: 1,
-        max: 16
-      },
-      colorNoise: {
-        default: 0.1,
-        min: 0,
-        max: 0.5
-      },
-      positionalNoise: {
-        default: 0, // percent of screen
-        min: 0,
-        max: 0.5
-      },
-      directionalNoise: {
-        default: 0,
-        min: 0,
-        max: 0.1
-      },
-      particleSize: {
-        default: 25.0,
-        min: 1,
-        max: 100
-      },
-      particleLifetime: {
-        default: 10000, // ms
-        min: 500,
-        max: 60000
-      },
-      pulseFrequency: {
-        default: 0, // pulses per second
-        min: 0,
-        max: 2.0
-      },
-      particleDensity: { // particles per second
-        default: 50,
-        min: 10,
-        max: 250
-      }
+      symmetry:         { default: 4,     min: 1,     max: 16    },
+      colorNoise:       { default: 0.1,   min: 0,     max: 1     },
+      positionalNoise:  { default: 0,     min: 0,     max: 0.1   }, // percent of screen
+      directionalNoise: { default: 0,     min: 0,     max: 0.1   },
+      particleSize:     { default: 25.0,  min: 1,     max: 100   },
+      particleLifetime: { default: 10000, min: 500,   max: 60000 }, // ms
+      pulseFrequency:   { default: 0,     min: 0,     max: 2.0   },  // pulses per second
+      particleDensity:  { default: 50,    min: 10,    max: 250   },  // particles per second
     },
     
     isInitialized: function() {

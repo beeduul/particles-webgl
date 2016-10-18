@@ -96,6 +96,8 @@ var Graphics = {
 
     params: {
       symmetry:         { default: 4,     min: 1,     max: 16    },
+      colorHue:         { default: 0,     min: 0,     max: 360   }, // hue is in degress
+      saturation:       { default: 1,     min: 0,     max: 1.0   }, // saturation is 0 .. 1
       colorNoise:       { default: 0.1,   min: 0,     max: 1     },
       positionalNoise:  { default: 0,     min: 0,     max: 0.1   }, // percent of screen
       directionalNoise: { default: 0,     min: 0,     max: 0.1   },
@@ -208,13 +210,13 @@ var Graphics = {
 
   },
 
-  randomHSV: function() {
+  createHSV: function(hsv) {
     var min_s = 0.75;
     var min_v = 0.75;
 
-    var h = Math.random() * 360; // any hue
-    var s = Math.random() * (1 - min_s) + min_s;
-    var v = Math.random() * (1 - min_v) + min_v;
+    var h = hsv && hsv.hasOwnProperty('h') ? hsv.h : Math.random() * 360; // any hue
+    var s = hsv && hsv.hasOwnProperty('s') ? hsv.s : Math.random() * (1 - min_s) + min_s;
+    var v = hsv && hsv.hasOwnProperty('v') ? hsv.v : Math.random() * (1 - min_v) + min_v;
     
     return [h, s, v];
   },
@@ -256,7 +258,13 @@ var Graphics = {
 
     if (event.type == "mousedown") {
       // event.preventDefault();
-      this.rgb = this.hsvToRgb(this.randomHSV());
+      // this.setSimulationValue('colorHue', Math.random() * 360);
+      var s = this.getSimulationValue('saturation');
+      let hsv = this.createHSV( {
+        h: this.getSimulationValue('colorHue'),
+        s: s
+      } );
+      this.rgb = this.hsvToRgb(hsv);
       this.addParticlesAt(new glMatrix.vec2.fromValues(event.x, event.y), this.rgb);
     } else if (event.type == "mousemove") {
       // event.preventDefault();

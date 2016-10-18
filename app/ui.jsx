@@ -73,6 +73,8 @@ var UI = React.createClass({
         <Slider param={'directionalNoise'} />
         <Slider param={'colorNoise'} />
         <Checkbox param={'gravityType'} />
+        <Slider param={'colorHue'} />
+        <Slider param={'saturation'} />
       </div>
     )
   }

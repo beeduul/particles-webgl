@@ -97,7 +97,6 @@ var Graphics = {
       saturation:       { default: 1,     min: 0,     max: 1.0   }, // saturation is 0 .. 1
       colorNoise:       { default: 0.1,   min: 0,     max: 1     },
       positionalNoise:  { default: 0,     min: 0,     max: 0.1   }, // percent of screen
-      directionalNoise: { default: 0,     min: 0,     max: 0.1   },
       particleSize:     { default: 25.0,  min: 1,     max: 100   },
       particleLifetime: { default: 10000, min: 500,   max: 60000 }, // ms
       pulseFrequency:   { default: 0,     min: 0,     max: 2.0   },  // pulses per second
@@ -353,7 +352,6 @@ var Graphics = {
         thisPart[0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
         thisPart[1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
         
-        var directionalNoise = this.getSimulationValue('directionalNoise');
         var dx = 0;
         var dy = 0;
         if (this.lastLoc) {
@@ -363,8 +361,8 @@ var Graphics = {
 
         txArr[0][0] = thisPart[0];
         txArr[0][1] = thisPart[1];
-        txArr[0][2] = dx + (2 * Math.random() - 1) * directionalNoise;
-        txArr[0][3] = dy + (2 * Math.random() - 1) * directionalNoise;
+        txArr[0][2] = dx;
+        txArr[0][3] = dy;
 
         // accel.x, accel.y, decay, n/a -- "gravity" values
         var thisAccel;

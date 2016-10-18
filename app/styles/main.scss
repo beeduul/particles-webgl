@@ -8,6 +8,7 @@ body {
     top: 0;
     left: 0;
     z-index: 10;
+    margin: 10px;
 }
 
 #glcanvas {
@@ -15,6 +16,10 @@ body {
   width: 100vw;
   
   cursor: crosshair;
+}
+
+.parameter {
+  padding: 2px;
 }
 
 .parameter span.title {

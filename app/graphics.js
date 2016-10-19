@@ -34,6 +34,7 @@ var Graphics = {
       uniforms: {
         deltaTime:    {},
         nowTime:      {},
+        maxLifeTime:     {},
 
         uTexture0:    {},
         uTexture1:    {},
@@ -595,7 +596,6 @@ var Graphics = {
 
     // make sure no DEPTH_TEST
     gl.disable(gl.DEPTH_TEST);
-    gl.depthMask(false);
 
     var shader = this.shaders.particle_sim;
     gl.useProgram(shader.program);
@@ -662,9 +662,8 @@ var Graphics = {
     gl.viewport(0, 0, this.width, this.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // make sure DEPTH_TEST is on
     gl.enable(gl.DEPTH_TEST);
-    gl.depthMask(true);
+    gl.depthFunc(gl.GREATER);
 
     // gl.enable(gl.BLEND);
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -680,6 +679,8 @@ var Graphics = {
       this.vertexBuffers.particleUV.size, gl.FLOAT, false, 0, 0);      
 
     gl.uniform1f(shader.uniforms.nowTime.location, this.nowTime);
+    var maxLifeTime = this.getSimulationParam('particleLifetime').max;
+    gl.uniform1f(shader.uniforms.maxLifeTime.location, maxLifeTime);
     gl.uniform1f(shader.uniforms.deltaTime.location, this.deltaTime);
 
 
@@ -705,10 +706,11 @@ var Graphics = {
     
     // Set clear color to black, fully opaque
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clearDepth(100000.0);
+    gl.clearDepth(0);
+    // gl.depthMask(true);
+    // gl.depthRange(0, 1);
     gl.disable(gl.DEPTH_TEST);
-    gl.depthMask(false);
-    gl.depthFunc(gl.LEQUAL);
+
     // Clear the color as well as the depth buffer.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 

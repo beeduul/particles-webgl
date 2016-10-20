@@ -63,12 +63,12 @@ var UI = React.createClass({
   render: function() {
     return (
       <div id="ui">
-        <Slider param={'particleSize'} />
-        <Slider param={'particleLifetime'} />
-        <Slider param={'particleDensity'} />
+        <Slider param={'size'} />
+        <Slider param={'age'} />
+        <Slider param={'flow'} />
         <Slider param={'symmetry'} />
-        <Slider param={'pulseFrequency'} />
-        <Slider param={'positionalNoise'} />
+        <Slider param={'pulse'} />
+        <Slider param={'spray'} />
         <Slider param={'colorNoise'} />
         <Slider param={'colorHue'} />
         <Slider param={'saturation'} />

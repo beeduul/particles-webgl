@@ -97,11 +97,11 @@ var Graphics = {
       colorHue:         { default: 0,     min: 0,     max: 360   }, // hue is in degress
       saturation:       { default: 1,     min: 0,     max: 1.0   }, // saturation is 0 .. 1
       colorNoise:       { default: 0.1,   min: 0,     max: 1     },
-      positionalNoise:  { default: 0,     min: 0,     max: 0.1   }, // percent of screen
-      particleSize:     { default: 25.0,  min: 1,     max: 100   },
-      particleLifetime: { default: 10000, min: 500,   max: 60000 }, // ms
-      pulseFrequency:   { default: 0,     min: 0,     max: 2.0   },  // pulses per second
-      particleDensity:  { default: 50,    min: 10,    max: 250   },  // particles per second
+      spray:            { default: 0,     min: 0,     max: 0.1   }, // percent of screen
+      size:     { default: 25.0,  min: 1,     max: 100   },
+      age:              { default: 10000, min: 500,   max: 60000 }, // ms
+      pulse:            { default: 0,     min: 0,     max: 2.0   },  // pulses per second
+      flow:             { default: 50,    min: 10,    max: 250   },  // particles per second
       accel:            { default: -2.5,  min: -5,    max: 5     },
       decay:            { default: 0.999, min: 0.95,  max: 1     }
     },
@@ -301,7 +301,7 @@ var Graphics = {
       txArr.push([]);
     }
 
-    this.addAccumulator += this.getSimulationValue('particleDensity') * (this.deltaTime / 1000);
+    this.addAccumulator += this.getSimulationValue('flow') * (this.deltaTime / 1000);
 
     if (this.addAccumulator < 1)
       return;
@@ -347,11 +347,11 @@ var Graphics = {
         glMatrix.vec2.scale(dragVector_t, dragVector, t);
 
         // px, py, dx, dy
-        var positionalNoise = this.getSimulationValue('positionalNoise');
+        var spray = this.getSimulationValue('spray');
         var thisPart = glMatrix.vec2.create();
         glMatrix.vec2.add(thisPart, symP, dragVector_t);
-        thisPart[0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * positionalNoise;
-        thisPart[1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * positionalNoise;
+        thisPart[0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * spray;
+        thisPart[1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * spray;
         
         var dx = 0;
         var dy = 0;
@@ -392,14 +392,14 @@ var Graphics = {
         txArr[3][0] = clamp(1.0 - rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1);
         txArr[3][1] = clamp(1.0 - rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1);
         txArr[3][2] = clamp(1.0 - rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-        txArr[3][3] = this.nowTime + this.getSimulationValue('particleLifetime');
+        txArr[3][3] = this.nowTime + this.getSimulationValue('age');
 
         // size, pulse frequency, n/a, n/a
-        var particleSize = this.getSimulationValue('particleSize');
+        var size = this.getSimulationValue('size');
         const sizeScaleFactor = 0.5;
-        particleSize = particleSize + particleSize * (2 * Math.random() - 1) * sizeScaleFactor;
-        txArr[4][0] = particleSize;
-        txArr[4][1] = this.getSimulationValue("pulseFrequency");
+        size = size + size * (2 * Math.random() - 1) * sizeScaleFactor;
+        txArr[4][0] = size;
+        txArr[4][1] = this.getSimulationValue("pulse");
         txArr[4][2] = 0;
         txArr[4][3] = 0;
 
@@ -679,7 +679,7 @@ var Graphics = {
       this.vertexBuffers.particleUV.size, gl.FLOAT, false, 0, 0);      
 
     gl.uniform1f(shader.uniforms.nowTime.location, this.nowTime);
-    var maxLifeTime = this.getSimulationParam('particleLifetime').max;
+    var maxLifeTime = this.getSimulationParam('age').max;
     gl.uniform1f(shader.uniforms.maxLifeTime.location, maxLifeTime);
     gl.uniform1f(shader.uniforms.deltaTime.location, this.deltaTime);
 

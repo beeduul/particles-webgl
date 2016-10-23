@@ -188,6 +188,13 @@ var Graphics = {
       window.addEventListener(
         'resize', function() {self.onWindowResize();}, false
       );
+
+      ['keydown', 'keypress', 'keyup'].forEach(function(eventType) {
+        window.addEventListener(eventType, function(event) {
+          self.handleKeyEvent(event);
+        });
+      });
+
       window.addEventListener('mousewheel', function(event) {
         console.log(event);
         event.preventDefault();
@@ -257,6 +264,50 @@ var Graphics = {
     }
     
     return [r + m, g + m, b + m];
+  },
+
+  requestFullScreen: function(element) {
+    if (element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if(element.mozRequestFullScreen) {
+      element.mozRequestFullScreen();
+    } else if(element.webkitRequestFullscreen) {
+      element.webkitRequestFullscreen();
+    } else if(element.msRequestFullscreen) {
+      element.msRequestFullscreen();
+    }
+  },
+
+  exitFullScreen: function() {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if(document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if(document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  },
+
+  toggleFullScreen: function() {
+    var element = document.documentElement;
+    var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+    if (!fullscreenElement) {
+      this.requestFullScreen(element);
+    } else {
+      this.exitFullScreen();
+    }
+  },
+
+  handleKeyEvent: function(event) {
+    switch(event.type) {
+    case "keydown":
+      switch(event.key) {
+      case "f":
+        this.toggleFullScreen();
+        break;
+      }
+      break;
+    }
   },
 
   handleMouseEvent: function(event) {

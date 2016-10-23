@@ -232,7 +232,7 @@ var Graphics = {
     var m = v - c;
 
     while (h < 0) h += 360;
-    while (h > 360) h -= 360;
+    while (h >= 360) h -= 360;
 
     var r, g, b;
     if (0 <= h && h < 60) {

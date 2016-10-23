@@ -188,6 +188,11 @@ var Graphics = {
       window.addEventListener(
         'resize', function() {self.onWindowResize();}, false
       );
+      window.addEventListener('mousewheel', function(event) {
+        console.log(event);
+        event.preventDefault();
+      });
+
     })(this);
 
     // init gl

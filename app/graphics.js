@@ -103,7 +103,7 @@ var Graphics = {
       colorNoise:       { default: 0.1,   min: 0,     max: 1     },
       spray:            { default: 0,     min: 0,     max: 0.1   }, // percent of screen
       size:             { default: 25.0,  min: 1,     max: 100   },
-      age:              { default: 10000, min: 500,   max: 60000 }, // ms
+      age:              { default: 2500,  min: 500,   max: 30000 }, // ms
       pulse:            { default: 0,     min: 0,     max: 2.0   },  // pulses per second
       flow:             { default: 50,    min: 10,    max: 250   },  // particles per second
       accel:            { default: 0,     min: -10,   max: 10     },

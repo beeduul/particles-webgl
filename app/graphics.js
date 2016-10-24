@@ -2,6 +2,8 @@
 
 var glMatrix = require('gl-matrix');
 
+let VCR = require('vcr');
+
 var NUM_TEXTURES = 5;
 var SIMULATION_DIM = 256;
 
@@ -16,6 +18,8 @@ var Graphics = {
   width: undefined,
   height: undefined,
   webgl_extensions: {},
+  
+  vcr: new VCR(),
   
   shaders: {
     // example: {
@@ -302,16 +306,29 @@ var Graphics = {
     switch(event.type) {
     case "keydown":
       switch(event.key) {
+      case "r":
+        this.vcr.recording = true;
+        break;
       case "f":
         this.toggleFullScreen();
         break;
       }
+      break;
+    case "keyup":
+      switch(event.key) {
+      case "r":
+        this.vcr.recording = false;
+        break;
+      }
+
+    case "keypress":
       break;
     }
   },
 
   handleMouseEvent: function(event) {
 
+    var eventPos = new glMatrix.vec2.fromValues(event.x, event.y);
     if (event.type == "mousedown") {
       // event.preventDefault();
       // this.setSimulationValue('colorHue', Math.random() * 360);
@@ -321,11 +338,17 @@ var Graphics = {
         s: s
       } );
       this.rgb = this.hsvToRgb(hsv);
-      this.addParticlesAt(new glMatrix.vec2.fromValues(event.x, event.y), this.rgb);
+      
+      this.vcr.recordEvent(eventPos, this.rgb);
+      this.vcr.info();
+      
+      this.addParticlesAt(eventPos, this.rgb);
     } else if (event.type == "mousemove") {
       // event.preventDefault();
       if (this.rgb) {
-        this.addParticlesAt(new glMatrix.vec2.fromValues(event.x, event.y), this.rgb);
+        this.vcr.recordEvent(eventPos, this.rgb);
+        this.vcr.info();
+        this.addParticlesAt(eventPos, this.rgb);
       }
     } else if (event.type == "mouseup") {
       this.rgb = null;
@@ -527,6 +550,8 @@ var Graphics = {
   update: function(nowTime, deltaTime) {
     this.nowTime = nowTime;
     this.deltaTime = deltaTime;
+
+    this.vcr.play(deltaTime, this)
 
     this.simulate();
     

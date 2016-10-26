@@ -1,17 +1,8 @@
 "use strict";
 
-var glMatrix = require('gl-matrix');
+let GLUtil = require('gl_util');
 
-let VCR = require('vcr');
-
-let Color = require('color');
-
-var NUM_TEXTURES = 5;
-var SIMULATION_DIM = 256;
-
-function clamp(val, min, max) {
-  return Math.max(min, Math.min(max, val));
-}
+let Layer = require('layer');
 
 var Graphics = {
 
@@ -19,9 +10,6 @@ var Graphics = {
   canvas: null,
   width: undefined,
   height: undefined,
-  webgl_extensions: {},
-  
-  vcr: new VCR(),
   
   shaders: {
     // example: {
@@ -33,7 +21,7 @@ var Graphics = {
     //     uniform_name: { value: value }
     //   }
     // },
-    particle: {
+    painter: {
       attributes: {
         aUV: {},
       },
@@ -49,12 +37,12 @@ var Graphics = {
         uTexture4:    {},
       }
     },
-    particle_sim: {
+    simulator: {
       attributes: {
         aPosition: {},
       },
       uniforms: {
-        uResolution:  { value: [SIMULATION_DIM, SIMULATION_DIM] },
+        uResolution:  {},
         deltaTime:    {},
         nowTime:      {},
         
@@ -68,37 +56,37 @@ var Graphics = {
       }
     }
   },
-  
-  vertexBuffers: {
-    particleUV: {
-      size: 2,
-      count: 3,
-      data: undefined, // new Float32Array([
-//           1.0, 0.0,
-//           0.0, 1.0,
-//           0.0, 0.0,
-//         ])
-    },
-    fullScreenQuadPos: {
-      size: 3,
-      count: 6,
-      data: new Float32Array([
-       -1.0, -1.0,  0.0,
-        1.0,  1.0,  0.0,
-       -1.0,  1.0,  0.0,
-       -1.0, -1.0,  0.0,
-        1.0, -1.0,  0.0,
-        1.0,  1.0,  0.0,
-      ])
+    
+  initShaders: function() {
+    for (var shader in this.shaders) {
+      var vertex_shader_script_id = shader + "_vs";
+      var fragment_shader_script_id = shader + "_fs";
+      initShader(this.gl, this.shaders[shader], vertex_shader_script_id, fragment_shader_script_id);
     }
   },
   
-  simulation: {
-    current: undefined,
-    previous: undefined,
-    num_particles: 0,
+  init: function(canvas) {
+    // init canvas
+    this.canvas = canvas;
+    this.onWindowResize();
 
-    params: {
+    this.lastLoc = null;
+    this.accelAngle = Math.random() * Math.PI * 2.0;
+
+    // init gl
+    this.gl = GLUtil.initWebGL(this.canvas);
+    GLUtil.setupGL(this.canvas, ["WEBGL_draw_buffers", "OES_texture_float"]);
+
+    // init shaders
+    this.initShaders();
+    
+    // init fbos
+
+    // set resolution uniform for compute shader programs
+    // drawParticleInit - bind framebuffer, setup viewport, clear, use sim shader, enableVertexAttribArray, bind array buffer, vertexAttribPointer, drawArrays (one big quad), cleanup
+
+
+    const PALETTE_PARAMS = {
       symmetry:         { default: 4,     min: 1,     max: 16    },
       colorHue:         { default: 0,     min: 0,     max: 360   }, // hue is in degress
       saturation:       { default: 1,     min: 0,     max: 1.0   }, // saturation is 0 .. 1
@@ -110,73 +98,10 @@ var Graphics = {
       flow:             { default: 50,    min: 10,    max: 250   },  // particles per second
       accel:            { default: 0,     min: -10,   max: 10     },
       decay:            { default: 0.999, min: 0.95,  max: 1     }
-    },
+    };
     
-    isInitialized: function() {
-      return (this.current && this.previous);
-    },
-    
-    swapBuffers: function() {
-      if (this.isInitialized()) {
-        var temp = this.current;
-        this.current = this.previous;
-        this.previous = temp;
-      } else {
-        console.error("simulation not yet initialized")
-      }
-    },
-    
-  },
-
-  generateParticleVertexData: function() {
-    var width = SIMULATION_DIM;
-    var height = SIMULATION_DIM;
-
-    this.vertexBuffers.particleUV.size = 2;
-    this.vertexBuffers.particleUV.count = width * height;
-
-    var uvArray = [];
-    for (var y=0; y<height; ++y) {
-      for (var x=0; x<width; ++x) {
-        uvArray.push(x/width);
-        uvArray.push(y/height);
-      }
-    }
-
-    var data = new Float32Array(uvArray);
-    this.vertexBuffers.particleUV.data = data;
-  },
-
-  initShaders: function() {
-    for (var shader in this.shaders) {
-      var vertex_shader_script_id = shader + "_vs";
-      var fragment_shader_script_id = shader + "_fs";
-      initShader(this.gl, this.shaders[shader], vertex_shader_script_id, fragment_shader_script_id);
-    }
-  },
-  
-  initBuffers: function() {
-    for (var vbName in this.vertexBuffers) {
-      this.prepareVertexBuffer(this.vertexBuffers[vbName]);
-    }
-  },
-  
-  prepareVertexBuffer: function(vb) {
-    var gl = this.gl;
-    vb.buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vb.buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vb.data, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-  },
-  
-  init: function(canvas) {
-    // init canvas
-    this.canvas = canvas;
-    this.onWindowResize();
-
-    this.lastLoc = null;
-    this.addAccumulator = 0;
-    this.accelAngle = Math.random() * Math.PI * 2.0;
+    this.layer = new Layer(PALETTE_PARAMS, this.shaders);
+    this.activeLayer = this.layer;
 
     canvas.addEventListener("mousedown", function(event) {
       this.handleMouseEvent(event);
@@ -207,24 +132,6 @@ var Graphics = {
       });
 
     })(this);
-
-    // init gl
-    this.gl = initWebGL(canvas);
-    this.setupGL();
-
-    this.generateParticleVertexData();
-
-    // init shaders
-    this.initShaders();
-    this.initBuffers();
-    
-    // init fbos
-
-    // initSimulationBuffers - for simulation - create textures, create framebuffer, bind textures to framebuffer, setup gl_FragData outputs for simulation shader
-    this.initSimulationBuffers();
-
-    // set resolution uniform for compute shader programs
-    // drawParticleInit - bind framebuffer, setup viewport, clear, use sim shader, enableVertexAttribArray, bind array buffer, vertexAttribPointer, drawArrays (one big quad), cleanup
 
   },
 
@@ -265,7 +172,7 @@ var Graphics = {
     case "keydown":
       switch(event.key) {
       case "r":
-        this.vcr.recording = true;
+        this.activeLayer.setRecording(true);
         break;
       case "f":
         this.toggleFullScreen();
@@ -275,7 +182,7 @@ var Graphics = {
     case "keyup":
       switch(event.key) {
       case "r":
-        this.vcr.recording = false;
+        this.activeLayer.setRecording(false);
         break;
       }
 
@@ -285,493 +192,28 @@ var Graphics = {
   },
 
   handleMouseEvent: function(event) {
-
-    var eventPos = new glMatrix.vec2.fromValues(event.x, event.y);
-    if (event.type == "mousedown") {
-      // event.preventDefault();
-      // this.setSimulationValue('colorHue', Math.random() * 360);
-      var s = this.getSimulationValue('saturation');
-      let hsv = Color.createHSV( {
-        h: this.getSimulationValue('colorHue'),
-        s: s
-      } );
-      this.rgb = Color.hsvToRgb(hsv);
-      
-      this.vcr.recordEvent(eventPos, this.rgb);
-      this.vcr.info();
-      
-      this.addParticlesAt(eventPos, this.rgb);
-    } else if (event.type == "mousemove") {
-      // event.preventDefault();
-      if (this.rgb) {
-        this.vcr.recordEvent(eventPos, this.rgb);
-        this.vcr.info();
-        this.addParticlesAt(eventPos, this.rgb);
-      }
-    } else if (event.type == "mouseup") {
-      this.rgb = null;
-      this.lastLoc = null;
-    }
+    this.activeLayer.handlePointerEvent(event);
   },
 
-  getSimulationParam: function(name) {
-    if (this.simulation.params[name]) {
-      return this.simulation.params[name];
-    } else {
-      return this.shaders.particle_sim.params[name];
-    }
+  getPaletteParam: function(name) {
+    return this.activeLayer.getPaletteParam(name);
+    // if (this.simulation.params[name]) {
+    //   return this.simulation.params[name];
+    // } else {
+    //   return this.shaders.particle_sim.params[name];
+    // }
   },
   
-  getSimulationValue: function(name) {
-    var param = this.getSimulationParam(name);
-    return param.hasOwnProperty('value') ? param.value : param.default;
+  getPaletteValue: function(name) {
+    return this.activeLayer.getPaletteValue(name);
   },
   
-  setSimulationValue: function(name, value) {
-    this.getSimulationParam(name).value = value;
+  setPaletteValue: function(name, value) {
+    this.getPaletteParam(name).value = value;
   },
   
-  addParticlesAt: function(loc, rgb) {
-
-    var txArr = [];
-    for (var n = 0; n < NUM_TEXTURES; n++) {
-      txArr.push([]);
-    }
-
-    this.addAccumulator += this.getSimulationValue('flow') * (this.deltaTime / 1000);
-
-    if (this.addAccumulator < 1)
-      return;
-    
-    var numToAdd = Math.floor(this.addAccumulator);
-    this.addAccumulator = 0;
-    
-    const center = glMatrix.vec2.fromValues(this.canvas.width / 2.0, this.canvas.height / 2.0);
-    var pVec = glMatrix.vec2.create();
-    glMatrix.vec2.sub(pVec, loc, center);
-    
-    var pAngle = Math.atan2(pVec[1], pVec[0]);
-
-    var pLastVec = glMatrix.vec2.create();
-    glMatrix.vec2.sub(pLastVec, this.lastLoc || loc, center);
-    
-    var pLastAngle = Math.atan2(pLastVec[1], pLastVec[0]);
-
-    let wander = false;// this.getSimulationValue('wander');
-    if (wander) {
-      this.accelAngle += Math.random() * Math.PI * 2.0 / 100.0;
-    }
-
-    var numSymmetries = Math.ceil(this.getSimulationValue('symmetry'));
-    for (var s = 0; s < numSymmetries; s++) {
-
-      var symP = glMatrix.vec2.fromValues(Math.cos(pAngle), Math.sin(pAngle));
-      glMatrix.vec2.scale(symP, symP, glMatrix.vec2.length(pVec));
-      glMatrix.vec2.add(symP, symP, center);
-
-      var lastSymP = glMatrix.vec2.fromValues(Math.cos(pLastAngle), Math.sin(pLastAngle));
-      glMatrix.vec2.scale(lastSymP, lastSymP, glMatrix.vec2.length(pLastVec));
-      glMatrix.vec2.add(lastSymP, lastSymP, center);
-      
-      var dragVector = glMatrix.vec2.fromValues(0, 0);
-      glMatrix.vec2.sub(dragVector, symP, lastSymP);
-
-      for (var p = 0; p < numToAdd; p++) {
-
-        var t = p / numToAdd; // t is interpolation value along mouse stroke
-
-        var dragVector_t = glMatrix.vec2.create();
-        glMatrix.vec2.scale(dragVector_t, dragVector, t);
-
-        // px, py, dx, dy
-        var spray = this.getSimulationValue('spray');
-        var thisPart = glMatrix.vec2.create();
-        glMatrix.vec2.add(thisPart, symP, dragVector_t);
-        thisPart[0] = (thisPart[0] / this.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * spray;
-        thisPart[1] = (thisPart[1] / this.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * spray;
-        
-        var dx = 0;
-        var dy = 0;
-        if (this.lastLoc) {
-          dx = dragVector[0] / this.width * 10;
-          dy = -dragVector[1] / this.height * 10;
-        }
-
-        txArr[0][0] = thisPart[0];
-        txArr[0][1] = thisPart[1];
-        txArr[0][2] = dx;
-        txArr[0][3] = dy;
-
-        // accel.x, accel.y, decay, n/a -- "gravity" values
-        var thisAccel;
-        if (wander) {
-          thisAccel = glMatrix.vec2.fromValues(Math.cos(this.accelAngle), Math.sin(this.accelAngle)); // wandering gravity direction
-        } else {
-          thisAccel = glMatrix.vec2.clone(thisPart); // center gravity
-          // glMatrix.vec2.sub(thisAccel, thisPart, center);
-        }
-        glMatrix.vec2.normalize(thisAccel, thisAccel);
-        var accel = this.getSimulationValue('accel');
-        glMatrix.vec2.scale(thisAccel, thisAccel, accel);
-        txArr[1][0] = thisAccel[0];
-        txArr[1][1] = thisAccel[1];
-        txArr[1][2] = this.getSimulationValue('decay') - Math.random() * 0.05;
-        txArr[1][3] = 0;
-
-        // birthColor r, g, b, birthTime
-        var colorNoise = this.getSimulationValue('colorNoise');
-        txArr[2][0] = clamp(rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-        txArr[2][1] = clamp(rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-        txArr[2][2] = clamp(rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-        txArr[2][3] = this.nowTime;
-      
-        // deathcolor r, g, b, deathTime
-        txArr[3][0] = clamp(1.0 - rgb[0] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-        txArr[3][1] = clamp(1.0 - rgb[1] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-        txArr[3][2] = clamp(1.0 - rgb[2] + (2 * Math.random() - 1) * colorNoise, 0, 1);
-        txArr[3][3] = this.nowTime + this.getSimulationValue('age');
-
-        // size, pulse frequency, n/a, n/a
-        var size = this.getSimulationValue('size');
-        const sizeScaleFactor = 0.5;
-        size = size + size * (2 * Math.random() - 1) * sizeScaleFactor;
-        txArr[4][0] = size;
-        txArr[4][1] = this.getSimulationValue("pulse");
-        txArr[4][2] = 0;
-        txArr[4][3] = 0;
-
-        this.loadParticleOntoGPU(txArr);
-      }
-      
-      pAngle += Math.PI * 2.0 / numSymmetries;
-      pLastAngle += Math.PI * 2.0 / numSymmetries;
-      
-    }
-    
-    this.lastLoc = loc;
-  },
-  
-  loadParticleOntoGPU: function(txArr) {
-    const shortBuf = new Float32Array(4 * 4);
-    var gl = this.gl;
-
-    const sim_width = SIMULATION_DIM;
-    const sim_height = SIMULATION_DIM;
-      
-    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-      var tx = this.simulation.previous.textures[tx_idx];
-      var aux_fb = this.simulation.previous.aux_frame_buffers[tx_idx];
-  
-      gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
-
-      var sim_x = this.simulation.num_particles % sim_width;
-      var sim_y = Math.floor(this.simulation.num_particles / sim_width);
-      if (sim_x == 0 && sim_y == SIMULATION_DIM) {
-        sim_y = 0;
-      }
-
-      var spaceAvailable = sim_width - sim_x;
-
-      var base_index = this.simulation.num_particles * 4;
-
-      for (var i = 0; i < 4; i++) {
-        shortBuf[i] = txArr[tx_idx][i];
-      }
-
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, tx);
-
-      if (spaceAvailable < 4) {
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, spaceAvailable, 1, gl.RGBA, gl.FLOAT, shortBuf);
-        var overflow = 4 - spaceAvailable;
-        var overBuf = new Float32Array(overflow * 4);
-        for (var i = 0; i < overBuf; i++) {
-          overBuf[i] = shortBuf[spaceAvailable + i];
-        }
-        var newY = (sim_y + 1) % sim_height;
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, newY, overflow, 1, gl.RGBA, gl.FLOAT, overBuf);
-      } else {
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, sim_x, sim_y, 4, 1, gl.RGBA, gl.FLOAT, shortBuf);
-      }
-    }
-
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    this.simulation.num_particles += 1;
-    if (this.simulation.num_particles > sim_width * sim_height) {
-      this.simulation.num_particles = 0;
-    }
-    
-  },
-
-  update: function(nowTime, deltaTime) {
-    this.nowTime = nowTime;
-    this.deltaTime = deltaTime;
-
-    this.vcr.play(deltaTime, this)
-
-    this.simulate();
-    
-    this.draw();
-
-    // swap simulation buffers
-    this.simulation.swapBuffers();
-  },
-  
-  initSimulationBuffers: function() {
-    var draw_buffers_ext = this.webgl_extensions.draw_buffers_ext;
-    var gl = this.gl;
-    
-    var w, h; w = h = SIMULATION_DIM;
-
-    var size = w * h * 4;
-    var src_buffer = new Float32Array(size);
-    for (var i = 0; i < size; i++) {
-      src_buffer[i] = 0;
-    }
-    
-    // initialize last and next simulation buffers
-    for (var sim_buffer_idx = 0; sim_buffer_idx < 2; sim_buffer_idx++) {
-      
-      if (this.simulation.current && this.simulation.previous) {
-        throw("simulation already initialized");
-      }
-      
-      console.log("Configuring " + (!this.simulation.current ? "current" : "efe") + " simulation_buffer");
-      
-      var state = {
-        frame_buffer: gl.createFramebuffer(),
-        aux_frame_buffers: [],
-        textures: []
-      }
-
-      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-        var tx = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, tx);
-        
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, src_buffer);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-        gl.bindTexture(gl.TEXTURE_2D, null);
-        src_buffer = undefined;
-        
-        console.log("Created Texture " + tx_idx);
-        state.textures[tx_idx] = (tx);
-      }
-
-      gl.bindFramebuffer(gl.FRAMEBUFFER, state.frame_buffer);
-      var color_attachments = [];
-      for (var color_attachment_idx = 0; color_attachment_idx < NUM_TEXTURES; color_attachment_idx++) {
-        color_attachments[color_attachment_idx] = (draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + color_attachment_idx); // gl_FragData[color_attachment_idx]
-      }
-      this.simulation.color_attachments = color_attachments;
-      
-      console.log("color_attachments: ", color_attachments);
-
-      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-        var tx = state.textures[tx_idx];
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, color_attachments[tx_idx], gl.TEXTURE_2D, tx, 0);
-        console.log("framebufferTexture2D for color_attachment", color_attachments[tx_idx], ", tx: ", tx);
-      }
-
-      // attach textures to gl_FragData[] outputs
-      draw_buffers_ext.drawBuffersWEBGL(this.simulation.color_attachments);
-
-      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-        console.error("Can't use main framebuffer.");
-        // See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
-      }
-      if (!gl.isFramebuffer(state.frame_buffer)) {
-        console.error("Frame buffer failed");
-      }
-      
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      
-      
-      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-        var tx = state.textures[tx_idx];
-        var aux_fb = gl.createFramebuffer();
-        state.aux_frame_buffers[tx_idx] = aux_fb;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL, gl.TEXTURE_2D, tx, 0);
-
-        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-          console.error("Can't use aux_fb " + tx_idx);
-          // See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
-        }
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      }
-
-
-      if (this.simulation.current) {
-        this.simulation.previous = state;
-      } else {
-        this.simulation.current = state;
-      }
-
-    }
-    
-  },
-  
-  simulate: function() {
-    
-    var gl = this.gl;
-
-    // write the output of the simulation to the current framebuffer
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.simulation.current.frame_buffer);
-
-    var draw_buffers_ext = this.webgl_extensions.draw_buffers_ext;
-    draw_buffers_ext.drawBuffersWEBGL(this.simulation.color_attachments);
-
-    gl.viewport(0, 0, SIMULATION_DIM, SIMULATION_DIM);
-
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.blendFunc(gl.ONE, gl.ZERO);  // so alpha output color draws correctly
-
-    // make sure no DEPTH_TEST
-    gl.disable(gl.DEPTH_TEST);
-
-    var shader = this.shaders.particle_sim;
-    gl.useProgram(shader.program);
-
-    // send vertex information to GPU
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffers.fullScreenQuadPos.buffer);
-    gl.enableVertexAttribArray(shader.attributes.aPosition.location);
-    gl.vertexAttribPointer(
-      shader.attributes.aPosition.location, // index of target attribute in the buffer bound to gl.ARRAY_BUFFER
-      this.vertexBuffers.fullScreenQuadPos.size, // number of components per attribute
-      gl.FLOAT, false, 0, 0);  // type, normalized, stride, offset
-
-    // update shader uniforms
-
-    // enable texture samplers in shader
-    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-      gl.activeTexture(gl.TEXTURE0 + tx_idx);
-      gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[tx_idx]);
-      gl.uniform1i(shader.uniforms["uTexture" + tx_idx].location, tx_idx);
-    }
-
-    gl.uniform1f(shader.uniforms.nowTime.location, this.nowTime);
-    gl.uniform1f(shader.uniforms.deltaTime.location, this.deltaTime);
-
-    Object.keys(shader.params).forEach(function(key) {
-      var param = shader.params[key];
-      if (Array.isArray(param.value)) {
-        switch(param.value.length) {
-          case 1: gl.uniform1f(param.location, param.value[0]); break;
-          case 2: gl.uniform2f(param.location, param.value[0], param.value[1]); break;
-          case 3: gl.uniform3f(param.location, param.value[0], param.value[1], param.value[2]); break;
-          case 4: gl.uniform4f(param.location, param.value[0], param.value[1], param.value[2], param.value[3]); break;
-          default: throw ("unhandled length " + param.value.length)
-        }
-      } else {
-        switch(param.type) {
-        case "i":
-          gl.uniform1i(param.location, param.value);
-          break;
-        default:
-          gl.uniform1f(param.location, param.value);
-          break;
-        }
-      }
-    });
-        
-    gl.uniform2f(shader.uniforms.uResolution.location,
-      shader.uniforms.uResolution.value[0],
-      shader.uniforms.uResolution.value[1]
-    );
-
-    // 'draw' the simulation
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffers.fullScreenQuadPos.count);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.disableVertexAttribArray(shader.attributes.aPosition.location);
-    gl.useProgram(null);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  },
-  
-  draw: function() {
-    var gl = this.gl;
-    
-    gl.viewport(0, 0, this.width, this.height);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.GREATER);
-
-    // gl.enable(gl.BLEND);
-    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    
-    var shader = this.shaders.particle;
-    gl.useProgram(shader.program);
-
-    // bind the particleUV vertex buffer to GPU
-    gl.enableVertexAttribArray(shader.attributes.aUV.location);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffers.particleUV.buffer);
-    gl.vertexAttribPointer(
-      shader.attributes.aUV.location,
-      this.vertexBuffers.particleUV.size, gl.FLOAT, false, 0, 0);      
-
-    gl.uniform1f(shader.uniforms.nowTime.location, this.nowTime);
-    var maxLifeTime = this.getSimulationParam('age').max;
-    gl.uniform1f(shader.uniforms.maxLifeTime.location, maxLifeTime);
-    gl.uniform1f(shader.uniforms.deltaTime.location, this.deltaTime);
-
-
-    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
-      gl.activeTexture(gl.TEXTURE0 + tx_idx);
-      gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[tx_idx]);
-      gl.uniform1i(shader.uniforms["uTexture" + tx_idx].location, tx_idx);
-    }
-
-    gl.drawArrays(gl.POINTS, 0, this.vertexBuffers.particleUV.count);
-    
-    // gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.disableVertexAttribArray(shader.attributes.aUV.location);
-    gl.useProgram(null);
-    // gl.disable(gl.BLEND);
-  },
-
-  setupGL: function() {
-    var gl = this.gl;
-    
-    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Set clear color to black, fully opaque
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clearDepth(0);
-    // gl.depthMask(true);
-    // gl.depthRange(0, 1);
-    gl.disable(gl.DEPTH_TEST);
-
-    // Clear the color as well as the depth buffer.
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    var available_extensions = gl.getSupportedExtensions();
-    console.log(available_extensions);
-
-    var float_textures_ext = gl.getExtension("OES_texture_float");
-    console.log("float_textures_ext: ", float_textures_ext);
-
-    var draw_buffers_ext = gl.getExtension("WEBGL_draw_buffers");
-    var maxDrawingBuffers = gl.getParameter(draw_buffers_ext.MAX_DRAW_BUFFERS_WEBGL);
-    var maxColorAttachments = gl.getParameter(draw_buffers_ext.MAX_COLOR_ATTACHMENTS_WEBGL);
-    var maxUniformVectors = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
-    var maxUsable = Math.min(maxDrawingBuffers, maxColorAttachments, maxUniformVectors);
-
-    console.log("draw_buffers_ext: ", draw_buffers_ext);
-    console.log("maxDrawingBuffers: ", maxDrawingBuffers);
-    console.log("maxColorAttachments:", maxColorAttachments);
-    console.log("maxUniformVectors:", maxUniformVectors);
-    console.log("maxUsable:", maxUsable);
-
-    this.webgl_extensions.draw_buffers_ext = draw_buffers_ext;
+  update: function(time) {
+    this.activeLayer.update(this.canvas, time);
   },
 
   onWindowResize: function() {
@@ -913,31 +355,6 @@ function createProgramFromScripts(gl, vertexShaderId, fragmentShaderId) {
   var vertexShader = createShaderFromScript(gl, vertexShaderId);
   var fragmentShader = createShaderFromScript(gl, fragmentShaderId);
   return createProgram(gl, vertexShader, fragmentShader);
-}
-
-function initWebGL(canvas) {
-  var gl = null;
-
-  try {
-  // Try to grab the standard context. If it fails, fallback to experimental.
-    var contextAttributes = {antialias: false};
-    gl = canvas.getContext("webgl", contextAttributes);
-    if (gl) {
-      console.log("webgl context creation succeeded with contextAttributes ", contextAttributes);
-    } else {
-      console.log("webgl context creation failed, falling back to experimental-webgl");
-      canvas.getContext("experimental-webgl", contextAttributes);
-    }
-  }
-  catch(e) {}
-
-  // If we don't have a GL context, give up now
-  if (!gl) {
-    alert("Unable to initialize WebGL. Your browser may not support it.");
-    gl = null;
-  }
-
-  return gl;
 }
 
 module.exports = Graphics;

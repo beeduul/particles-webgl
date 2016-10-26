@@ -16,19 +16,19 @@ class VCR {
     console.log("clear");
   }
 
-  play(deltaTime, graphics) {
+  play(time, layer) {
     
     if (this.recording) {
 
-      this._nowTime += deltaTime;
+      this._nowTime += time.deltaTime;
 
     } else if (this._events.length > 0) {
 
       var event = this._events[this._head];
 
-      var endTime = this._nowTime + deltaTime;
+      var endTime = this._nowTime + time.deltaTime;
       while(event.ts < endTime) {
-        graphics.addParticlesAt(event.pos, event.rgb);
+        layer.addParticlesAt(event.pos, event.rgb, time);
 
         this._head++;
         if (this._head == this._events.length) {
@@ -83,8 +83,9 @@ class VCR {
 
   recordEvent(pos, rgb) {
     if (this._recording) {
-      console.log("recordEvent", this._nowTime);
       this._events.push({ ts: this._nowTime, pos: pos, rgb: rgb });
+      
+      this.info();
     }
   }
 

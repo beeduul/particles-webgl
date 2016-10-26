@@ -6,9 +6,13 @@
 </head>
 <body id="index" oncontextmenu="return false;">
   <div id="app">
+    <div id='ui'> </div>
+    <canvas id="glcanvas">
+      Your browser doesnt appear to support the <code>&lt;canvas&gt;</code> element.
+    </canvas>
   </div>
   
-  <script id="particle_sim_vs" type="x-shader/x-vertex">
+  <script id="simulator_vs" type="x-shader/x-vertex">
   #ifdef GL_ES
   precision highp float;
   #endif
@@ -20,7 +24,7 @@
   }
   </script>
   
-  <script id="particle_sim_fs" type="x-shader/x-fragment">
+  <script id="simulator_fs" type="x-shader/x-fragment">
   #extension GL_EXT_draw_buffers : require
   precision mediump float;
   
@@ -80,7 +84,7 @@
   }
   </script>
   
-  <script id='particle_vs' type="x-shader/x-vertex">
+  <script id='painter_vs' type="x-shader/x-vertex">
   // attribute vec2 vertexPosition;
   attribute vec2 aUV;
   varying vec2 vUV;
@@ -139,7 +143,7 @@
   }
   </script>
   
-  <script id='particle_fs' type="x-shader/x-fragment">
+  <script id='painter_fs' type="x-shader/x-fragment">
   #ifdef GL_ES
   precision highp float;
   #endif

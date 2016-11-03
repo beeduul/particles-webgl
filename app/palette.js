@@ -1,8 +1,19 @@
 "use strict";
 
+const RANDOMIZE = false;
+
 class Palette {
   constructor(params) {
     this.params = JSON.parse(JSON.stringify(params)); // deep copy params
+    
+    if (RANDOMIZE) {
+      for (let name in this.params) {
+        let param = this.params[name];
+        let delta = param.max - param.min;
+        param.default = Math.random() * delta + param.min;
+      }
+    }
+    
   }
 
   getParam(name) {

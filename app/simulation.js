@@ -5,8 +5,31 @@ let GLUtil = require('gl_util');
 const NUM_TEXTURES = 5;
 const SIMULATION_DIM = 256;
 
+function createTriVertexBuffer(gl) {
+  const numComponents = 2;
+  const data = new Float32Array([
+    -1.0, -1.0,
+     0.0,  1.0,
+     1.0, -1.0
+  ]);
+
+  return GLUtil.createVertexBuffer(numComponents, data);
+}
+
+function createQuadVertexBuffer(gl) {
+  const numComponents = 2;
+  const data = new Float32Array([
+    -1.0, -1.0,
+    -1.0,  1.0,
+     1.0,  1.0,
+     1.0, -1.0
+  ]);
+
+  return GLUtil.createVertexBuffer(numComponents, data);
+}
+
 function createFullScreenQuadVertexBuffer(gl) {
-  const stride = 3;
+  const numComponents = 3;
   const data = new Float32Array([
    -1.0, -1.0,  0.0,
     1.0,  1.0,  0.0,
@@ -14,27 +37,68 @@ function createFullScreenQuadVertexBuffer(gl) {
    -1.0, -1.0,  0.0,
     1.0, -1.0,  0.0,
     1.0,  1.0,  0.0,
-  ])
+  ]);
   
-  return new GLUtil.createVertexBuffer(stride, data.length / stride, data);
+  return GLUtil.createVertexBuffer(numComponents, data);
 }
 
-function createParticleUVVertexBuffer(gl) {
+function createParticleLineUV(gl) {
+  const width = SIMULATION_DIM;
+  const height = SIMULATION_DIM;
+  
+  // create two uv lookups, one for each vertex for line-drawn particles
+  var buffer = [];
+  for (var y=0; y<height; ++y) {
+    for (var x=0; x<width; ++x) {
+      // first vertex of the line
+      buffer.push(x/width);
+      buffer.push(y/height);
+      // second vertex of the line
+      buffer.push(x/width);
+      buffer.push(y/height);
+    }
+  }
+  
+  const numComponents = 2;
+  const data = new Float32Array(buffer);
+
+  return GLUtil.createVertexBuffer(numComponents, data);
+}
+
+function createParticleX(gl) {
+  const width = SIMULATION_DIM;
+  const height = SIMULATION_DIM;
+  
+  // create two x vertices for each particle, one for the beginning and one for the end of each line-drawn particle
+  var buffer = [];
+  for (var y=0; y<height; ++y) {
+    for (var x=0; x<width; ++x) {
+      buffer.push(-0.1);
+      buffer.push(0.1);
+    }
+  }
+  
+  const numComponents = 1;
+  const data = new Float32Array(buffer);
+  return GLUtil.createVertexBuffer(numComponents, data);
+}
+
+function createParticleUV(gl) {
   const width = SIMULATION_DIM;
   const height = SIMULATION_DIM;
 
-  var uvArray = [];
+  var buffer = [];
   for (var y=0; y<height; ++y) {
     for (var x=0; x<width; ++x) {
-      uvArray.push(x/width);
-      uvArray.push(y/height);
+      buffer.push(x/width);
+      buffer.push(y/height);
     }
   }
 
-  const stride = 2;
-  const data = new Float32Array(uvArray);
+  const numComponents = 2;
+  const data = new Float32Array(buffer);
 
-  return new GLUtil.createVertexBuffer(stride, data.length / stride, data);
+  return GLUtil.createVertexBuffer(numComponents, data);
 }
 
 
@@ -44,7 +108,11 @@ class Simulation {
     this.gl = GLUtil.gl();
 
     this.fullScreenQuadPos = createFullScreenQuadVertexBuffer(this.gl);
-    this.particleUV = createParticleUVVertexBuffer(this.gl);
+
+    this.particleUV = createParticleUV(this.gl);
+
+    this.particleX = createParticleX(this.gl);
+    this.particleLineUV = createParticleLineUV(this.gl);
 
     this.simulation_shader = simulation_shader;
 
@@ -102,7 +170,7 @@ class Simulation {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
         gl.bindTexture(gl.TEXTURE_2D, null);
-        src_buffer = undefined;
+        src_buffer = null;
         
         console.log("Created Texture " + tx_idx);
         state.textures[tx_idx] = (tx);
@@ -185,7 +253,7 @@ class Simulation {
     gl.enableVertexAttribArray(shader.attributes.aPosition.location);
     gl.vertexAttribPointer(
       shader.attributes.aPosition.location, // index of target attribute in the buffer bound to gl.ARRAY_BUFFER
-      this.fullScreenQuadPos.size, // number of components per attribute
+      this.fullScreenQuadPos.numComponents, // number of components per attribute
       gl.FLOAT, false, 0, 0);  // type, normalized, stride, offset
 
     // update shader uniforms

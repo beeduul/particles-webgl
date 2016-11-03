@@ -35,10 +35,10 @@
   uniform float friction;
 
   uniform sampler2D uTexture0; // x, y, dx, dy
-  uniform sampler2D uTexture1; // n/a, n/a, n/a, sz
+  uniform sampler2D uTexture1; // accel x, accel y, decay, sz
   uniform sampler2D uTexture2; // birth r, g, b, time
   uniform sampler2D uTexture3; // death r, g, b, time
-  uniform sampler2D uTexture4; // sz, pulse, n/a, n/a, n/a
+  uniform sampler2D uTexture4; // sz, pulse, n/a, n/a
 
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
@@ -84,20 +84,21 @@
   }
   </script>
   
-  <script id='painter_vs' type="x-shader/x-vertex">
+  <script id='point_painter_vs' type="x-shader/x-vertex">
   // attribute vec2 vertexPosition;
   attribute vec2 aUV;
-  varying vec2 vUV;
+  varying vec2 vUV;  
 
   uniform float nowTime;
   uniform float maxLifeTime;
   uniform float deltaTime;
 
   uniform sampler2D uTexture0; // x, y, dx, dy
-  uniform sampler2D uTexture1; // n/a, n/a, n/a,
+  uniform sampler2D uTexture1; // accel x, accel y, decay, sz
   uniform sampler2D uTexture2; // birth r, g, b, time
   uniform sampler2D uTexture3; // death r, g, b, time
-  uniform sampler2D uTexture4; // sz, pulse, n/a, n/a, n/a
+  uniform sampler2D uTexture4; // sz, pulse, n/a, n/a
+
   void main() {
     vec4 pdata0 = texture2D(uTexture0, aUV);
     vec4 pdata1 = texture2D(uTexture1, aUV);
@@ -114,7 +115,6 @@
     float death = pdata3.w;
 
     float oldest = nowTime - maxLifeTime;
-    gl_Position = vec4(pos, (birth - oldest)/maxLifeTime, 1.0);
 
     if (birth == 0.0 || death > 0.0 && nowTime > death) {
       gl_PointSize = 0.0;
@@ -139,11 +139,13 @@
       gl_PointSize = size;
     } 
     
+    gl_Position = vec4(pos, (birth - oldest) / maxLifeTime, 1.0);
+    
     vUV = aUV;
   }
   </script>
   
-  <script id='painter_fs' type="x-shader/x-fragment">
+  <script id="point_painter_fs" type="x-shader/x-fragment">
   #ifdef GL_ES
   precision highp float;
   #endif
@@ -155,14 +157,12 @@
   uniform float deltaTime;
   
   uniform sampler2D uTexture0; // x, y, dx, dy
-  uniform sampler2D uTexture1; // n/a, n/a, n/a, sz
+  uniform sampler2D uTexture1; // accel x, accel y, decay, sz
   uniform sampler2D uTexture2; // birth r, g, b, time
   uniform sampler2D uTexture3; // death r, g, b, time
-  uniform sampler2D uTexture4; // sz, pulse, n/a, n/a, n/a
+  uniform sampler2D uTexture4; // sz, pulse, n/a, n/a
 
   void main() {
-    // vec4 pdata0 = texture2D(uTexture0, vUV);
-    // vec4 pdata1 = texture2D(uTexture1, vUV);
     vec4 pdata2 = texture2D(uTexture2, vUV);
     vec4 pdata3 = texture2D(uTexture3, vUV);
     
@@ -213,9 +213,153 @@
 
     // fakeshaded
     {
-      // float shadeAlpha = gl_PointCoord[0]; // left
       float shadeAlpha = (gl_PointCoord[0] + gl_PointCoord[1]) / 2.0; // upper left
       gl_FragColor = vec4(mix(birthCol, deathCol, age_t) * shadeAlpha, 1.0);
+    }
+  }
+  </script>
+  
+  <script id='painter_vs' type="x-shader/x-vertex">
+  // attribute vec2 vertexPosition;
+  attribute vec2 aUV;
+  attribute float aX;
+  varying vec2 vUV;  
+
+  uniform float nowTime;
+  uniform float maxLifeTime;
+  uniform float deltaTime;
+
+  uniform sampler2D uTexture0; // x, y, dx, dy
+  uniform sampler2D uTexture1; // accel x, accel y, decay, sz
+  uniform sampler2D uTexture2; // birth r, g, b, time
+  uniform sampler2D uTexture3; // death r, g, b, time
+  uniform sampler2D uTexture4; // sz, pulse, n/a, n/a
+  void main() {
+    vec4 pdata0 = texture2D(uTexture0, aUV);
+    vec4 pdata1 = texture2D(uTexture1, aUV);
+    vec4 pdata2 = texture2D(uTexture2, aUV);
+    vec4 pdata3 = texture2D(uTexture3, aUV);
+    vec4 pdata4 = texture2D(uTexture4, aUV);
+
+    vec2 pos = pdata0.xy;
+
+    float size = pdata4.x;
+    float pulseFreq = pdata4.y;
+    
+    float birth = pdata2.w;
+    float death = pdata3.w;
+
+    float oldest = nowTime - maxLifeTime;
+
+    if (birth == 0.0 || death > 0.0 && nowTime > death) {
+      gl_PointSize = 0.0;
+    } else {
+      
+      float lifetime = death - birth;
+      float age = nowTime - birth;
+      float age_t = age / lifetime;
+      
+      const float fade_t = 0.2; // gt 0 && lt .5
+      if (age_t < fade_t) {
+        size *= age_t / fade_t;
+      } else
+      if (age_t > (1.0 - fade_t)) {
+        size *= (1.0 - age_t) / fade_t;
+      }
+      
+      const float TWO_PI = 6.28318530717959;
+      
+      size *= ((sin(TWO_PI / 1000.0 * pulseFreq * age )) + 1.0) / 2.0;
+      
+      gl_PointSize = size;
+    } 
+    
+    // TODO: adjust x & y by size... something like:
+    // x -> pos.x + aX * cos(r) * size
+    // y -> pos.y + aX * sin(r) * size
+    float x = pos.x + aX;
+    float y = pos.y;
+    float z = (birth - oldest) / maxLifeTime;
+    gl_Position = vec4(x, y, z, 1.0);
+    
+    vUV = aUV;
+  }
+  </script>
+  
+  <script id='painter_fs' type="x-shader/x-fragment">
+  #ifdef GL_ES
+  precision highp float;
+  #endif
+
+  varying vec3 v3xyz;
+  varying vec2 vUV;
+
+  uniform float nowTime;
+  uniform float deltaTime;
+  
+  uniform sampler2D uTexture0; // x, y, dx, dy
+  uniform sampler2D uTexture1; // accel x, accel y, decay, sz
+  uniform sampler2D uTexture2; // birth r, g, b, time
+  uniform sampler2D uTexture3; // death r, g, b, time
+  uniform sampler2D uTexture4; // sz, pulse, n/a, n/a
+
+  void main() {
+    // vec4 pdata0 = texture2D(uTexture0, vUV);
+    // vec4 pdata1 = texture2D(uTexture1, vUV);
+    vec4 pdata2 = texture2D(uTexture2, vUV);
+    vec4 pdata3 = texture2D(uTexture3, vUV);
+    
+    float birth = pdata2.w;
+    float death = pdata3.w;
+
+    if (birth == 0.0 || death > 0.0 && nowTime > death) {
+      discard;
+    }
+
+    float lifetime = death - birth;
+    float age = nowTime - birth;
+
+    float age_t = age / lifetime;    
+    vec3 birthCol = pdata2.rgb;
+    vec3 deathCol = pdata3.rgb;
+    
+    // // circle
+    // {
+    //   float x = 2.0 * (gl_PointCoord[0] - 0.5);
+    //   float y = 2.0 * (gl_PointCoord[1] - 0.5);
+    //   float d = x * x + y * y;
+    //
+    //   // hollow
+    //   // if (d > 1.0 || d < 0.9) {
+    //   //   discard;
+    //   // }
+    //
+    //   // filled
+    //   if (d > 1.0) {
+    //     discard;
+    //   }
+    // }
+    
+    // square
+    {
+      // float thickness = 0.05;
+      // if (gl_PointCoord[0] > thickness && gl_PointCoord[0] < 1.0 - thickness &&
+      //     gl_PointCoord[1] > thickness && gl_PointCoord[1] < 1.0 - thickness) {
+      //   discard;
+      // }
+    }
+
+    // solid
+    {
+      gl_FragColor = vec4(mix(birthCol, deathCol, age_t), 1.0);
+    }
+
+    // fakeshaded
+    {
+      // float shadeAlpha = gl_PointCoord[0]; // left
+
+      // float shadeAlpha = (gl_PointCoord[0] + gl_PointCoord[1]) / 2.0; // upper left
+      // gl_FragColor = vec4(mix(birthCol, deathCol, age_t) * shadeAlpha, 1.0);
     }
   }
   </script>

@@ -4,22 +4,22 @@ var _gl;
 var _extensions = {};
 
 class VertexBuffer {
-  constructor(gl, size, count, data) {
+  constructor(gl, numComponents, data) {
     this._buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-    this._size = size;
-    this._count = count;
+    this._numComponents = numComponents;
+    this._count = data.length / numComponents;
   }
 
   get buffer() {
     return this._buffer;
   }
   
-  get size() {
-    return this._size;
+  get numComponents() {
+    return this._numComponents;
   }
   
   get count() {
@@ -36,8 +36,8 @@ class GLUtil {
     return _extensions;
   }
 
-  static createVertexBuffer(size, count, data) {
-    return new VertexBuffer(_gl, size, count, data);
+  static createVertexBuffer(numComponents, count, data) {
+    return new VertexBuffer(_gl, numComponents, count, data);
   }
   
   static initWebGL(canvas) {
@@ -47,6 +47,9 @@ class GLUtil {
     // Try to grab the standard context. If it fails, fallback to experimental.
       var contextAttributes = {antialias: false};
       gl = canvas.getContext("webgl", contextAttributes);
+      
+      gl = WebGLDebugUtils.makeDebugContext(gl);
+      
       if (gl) {
         console.log("webgl context creation succeeded with contextAttributes ", contextAttributes);
       } else {

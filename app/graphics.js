@@ -21,9 +21,26 @@ var Graphics = {
     //     uniform_name: { value: value }
     //   }
     // },
+    point_painter: {
+      attributes: {
+        aUV: {}
+      },
+      uniforms: {
+        deltaTime:    {},
+        nowTime:      {},
+        maxLifeTime:     {},
+
+        uTexture0:    {},
+        uTexture1:    {},
+        uTexture2:    {},
+        uTexture3:    {},
+        uTexture4:    {},
+      }
+    },
     painter: {
       attributes: {
         aUV: {},
+        aX: {},
       },
       uniforms: {
         deltaTime:    {},
@@ -75,7 +92,7 @@ var Graphics = {
 
     // init gl
     this.gl = GLUtil.initWebGL(this.canvas);
-    GLUtil.setupGL(this.canvas, ["WEBGL_draw_buffers", "OES_texture_float"]);
+    GLUtil.setupGL(this.canvas, ["WEBGL_draw_buffers", "OES_texture_float"]); // OES_vertex_array_object
 
     // init shaders
     this.initShaders();

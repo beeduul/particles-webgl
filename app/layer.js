@@ -16,6 +16,8 @@ class Layer {
   constructor(palette_params, shaders) {
     this.shaders = shaders; // TODO deep copy
 
+    this.drawType = GLUtil.gl().LINES;
+
     this.palette = new Palette(palette_params);
     this.simulation = new Simulation(this.shaders.simulator);
 
@@ -63,15 +65,13 @@ class Layer {
     // gl.enable(gl.BLEND);
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     
-    var shader = this.shaders.painter;
+    var shader;
+    if (this.drawType == gl.POINTS) {
+      shader = this.shaders.point_painter;
+    } else {
+      shader = this.shaders.painter;
+    }
     gl.useProgram(shader.program);
-
-    // bind the particleUV vertex buffer to GPU
-    gl.enableVertexAttribArray(shader.attributes.aUV.location);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleUV.buffer);
-    gl.vertexAttribPointer(
-      shader.attributes.aUV.location,
-      this.simulation.particleUV.size, gl.FLOAT, false, 0, 0);      
 
     gl.uniform1f(shader.uniforms.nowTime.location, time.nowTime);
     var maxLifeTime = this.getPaletteParam('age').max;
@@ -85,7 +85,38 @@ class Layer {
       gl.uniform1i(shader.uniforms["uTexture" + tx_idx].location, tx_idx);
     }
 
-    gl.drawArrays(gl.POINTS, 0, this.simulation.particleUV.count);
+
+    if (this.drawType == gl.POINTS) {
+      // bind the particleUV vertex buffer to GPU
+      gl.enableVertexAttribArray(shader.attributes.aUV.location);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleUV.buffer);
+      gl.vertexAttribPointer(
+        shader.attributes.aUV.location,
+        this.simulation.particleUV.numComponents, gl.FLOAT, false, 0, 0
+      );
+
+      gl.drawArrays(gl.POINTS, 0, this.simulation.particleUV.count);
+    } else {
+      gl.enableVertexAttribArray(shader.attributes.aUV.location); // indices into 0, 0, 1, 1, 2, 2
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleLineUV.buffer);
+      gl.vertexAttribPointer(
+        shader.attributes.aUV.location,
+        this.simulation.particleLineUV.numComponents, gl.FLOAT, false, 0, 0
+      );
+      
+      gl.enableVertexAttribArray(shader.attributes.aX.location);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleX.buffer);
+      gl.vertexAttribPointer(
+        shader.attributes.aX.location,
+        this.simulation.particleX.numComponents, gl.FLOAT, false, 0, 0
+      );
+
+      // gl.lineWidth(1.0);
+      
+      gl.drawArrays(gl.LINES, 0, this.simulation.particleLineUV.count);
+      
+      gl.disableVertexAttribArray(shader.attributes.aX.location);
+    } 
     
     // gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);

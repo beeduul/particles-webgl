@@ -12,8 +12,6 @@ class VCR {
 
     this._nowTime = 0;
     this._duration = 0;
-    
-    console.log("clear");
   }
 
   play(time, layer) {

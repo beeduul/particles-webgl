@@ -267,34 +267,35 @@ class Simulation {
 
     gl.uniform1f(shader.uniforms.nowTime.location, time.nowTime);
     gl.uniform1f(shader.uniforms.deltaTime.location, time.deltaTime);
-
-    Object.keys(shader.params).forEach(function(key) {
-      var param = shader.params[key];
-      if (Array.isArray(param.value)) {
-        switch(param.value.length) {
-          case 1: gl.uniform1f(param.location, param.value[0]); break;
-          case 2: gl.uniform2f(param.location, param.value[0], param.value[1]); break;
-          case 3: gl.uniform3f(param.location, param.value[0], param.value[1], param.value[2]); break;
-          case 4: gl.uniform4f(param.location, param.value[0], param.value[1], param.value[2], param.value[3]); break;
-          default: throw ("unhandled length " + param.value.length)
-        }
-      } else {
-        switch(param.type) {
-        case "i":
-          gl.uniform1i(param.location, param.value);
-          break;
-        default:
-          gl.uniform1f(param.location, param.value);
-          break;
-        }
-      }
-    });
-        
     gl.uniform2f(shader.uniforms.uResolution.location,
       SIMULATION_DIM, // width
       SIMULATION_DIM  // height
     );
 
+    if (shader.params) {
+      Object.keys(shader.params).forEach(function(key) {
+        var param = shader.params[key];
+        if (Array.isArray(param.value)) {
+          switch(param.value.length) {
+            case 1: gl.uniform1f(param.location, param.value[0]); break;
+            case 2: gl.uniform2f(param.location, param.value[0], param.value[1]); break;
+            case 3: gl.uniform3f(param.location, param.value[0], param.value[1], param.value[2]); break;
+            case 4: gl.uniform4f(param.location, param.value[0], param.value[1], param.value[2], param.value[3]); break;
+            default: throw ("unhandled length " + param.value.length)
+          }
+        } else {
+          switch(param.type) {
+          case "i":
+            gl.uniform1i(param.location, param.value);
+            break;
+          default:
+            gl.uniform1f(param.location, param.value);
+            break;
+          }
+        }
+      });
+    }
+        
     // 'draw' the simulation
     gl.drawArrays(gl.TRIANGLES, 0, this.fullScreenQuadPos.count);
 

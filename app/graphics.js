@@ -1,5 +1,7 @@
 "use strict";
 
+let glsl = require('glslify');
+
 let GLUtil = require('gl_util');
 
 let Layer = require('layer');
@@ -10,7 +12,7 @@ var Graphics = {
   canvas: null,
   width: undefined,
   height: undefined,
-  
+
   shaders: {
     // example: {
     //   program: undefined, // created in initShaders
@@ -22,66 +24,33 @@ var Graphics = {
     //   }
     // },
     point_painter: {
+      name: 'point_painter',
       attributes: {
         aUV: {}
       },
-      uniforms: {
-        deltaTime:    {},
-        nowTime:      {},
-        maxLifeTime:     {},
-
-        uTexture0:    {},
-        uTexture1:    {},
-        uTexture2:    {},
-        uTexture3:    {},
-        uTexture4:    {},
-      }
     },
     painter: {
+     name: 'painter',
       attributes: {
         aUV: {},
         aX: {},
       },
-      uniforms: {
-        deltaTime:    {},
-        nowTime:      {},
-        maxLifeTime:     {},
-
-        uTexture0:    {},
-        uTexture1:    {},
-        uTexture2:    {},
-        uTexture3:    {},
-        uTexture4:    {},
-      }
     },
     simulator: {
+      name: 'simulator',
       attributes: {
         aPosition: {},
       },
-      uniforms: {
-        uResolution:  {},
-        deltaTime:    {},
-        nowTime:      {},
-        
-        uTexture0:    {},
-        uTexture1:    {},
-        uTexture2:    {},
-        uTexture3:    {},
-        uTexture4:    {},
-      },
-      params: {
-      }
-    }
+    },
   },
-    
+
   initShaders: function() {
-    for (var shader in this.shaders) {
-      var vertex_shader_script_id = shader + "_vs";
-      var fragment_shader_script_id = shader + "_fs";
-      initShader(this.gl, this.shaders[shader], vertex_shader_script_id, fragment_shader_script_id);
+    for (var shaderName in this.shaders) {
+      console.log(shaderName);
+      initShader(this.gl, shaderName, this.shaders);
     }
   },
-  
+
   init: function(canvas) {
     // init canvas
     this.canvas = canvas;
@@ -96,12 +65,6 @@ var Graphics = {
 
     // init shaders
     this.initShaders();
-    
-    // init fbos
-
-    // set resolution uniform for compute shader programs
-    // drawParticleInit - bind framebuffer, setup viewport, clear, use sim shader, enableVertexAttribArray, bind array buffer, vertexAttribPointer, drawArrays (one big quad), cleanup
-
 
     const PALETTE_PARAMS = {
       symmetry:         { default: 4,     min: 1,     max: 16    },
@@ -116,7 +79,7 @@ var Graphics = {
       accel:            { default: 0,     min: -10,   max: 10     },
       decay:            { default: 0.999, min: 0.95,  max: 1     }
     };
-    
+
     this.layer = new Layer(PALETTE_PARAMS, this.shaders);
     this.activeLayer = this.layer;
 
@@ -214,21 +177,16 @@ var Graphics = {
 
   getPaletteParam: function(name) {
     return this.activeLayer.getPaletteParam(name);
-    // if (this.simulation.params[name]) {
-    //   return this.simulation.params[name];
-    // } else {
-    //   return this.shaders.particle_sim.params[name];
-    // }
   },
-  
+
   getPaletteValue: function(name) {
     return this.activeLayer.getPaletteValue(name);
   },
-  
+
   setPaletteValue: function(name, value) {
     this.getPaletteParam(name).value = value;
   },
-  
+
   update: function(time) {
     this.activeLayer.update(this.canvas, time);
   },
@@ -241,17 +199,37 @@ var Graphics = {
     // this.camera.aspect = this.width/this.height;
   },
 
-  
+
 
 };
 
-function initShader(gl, shader, vertex_shader_script_id, fragment_shader_script_id)
+function initShader(gl, shaderName, shaders)
 {
-  shader.program = createProgramFromScripts(
-    gl,
-    vertex_shader_script_id, fragment_shader_script_id);
-  console.log("initShader (vertex_shader_script_id:", vertex_shader_script_id, ", fragment_shader_script_id: ", fragment_shader_script_id, "), shader: ", shader);
- 
+  var shader = shaders[shaderName];
+
+  createProgramFromScripts(gl, shaderName, shader);
+
+  shader.uniforms = {};
+
+  var uniforms = ['deltaTime', 'nowTime', 'maxLifeTime', 'uResolution'];
+  
+  for (var uniformName of uniforms) {
+    var glLoc = gl.getUniformLocation(shader.program, uniformName);
+    console.log(`${shaderName}: uniform ${uniformName} - ${glLoc}`)
+    if (glLoc) {
+      shader.uniforms[uniformName] = glLoc;
+    }
+  }
+  
+  for (var i = 0; i < 6; i++) {
+    var uniformName = `uTexture${i}`;
+    var glLoc = gl.getUniformLocation(shader.program, uniformName);
+    console.log(`${shaderName}: uniform ${uniformName} - ${glLoc}`)
+    if (glLoc) {
+      shader.uniforms[uniformName] = glLoc;
+    }
+  }
+
   // get attribute and uniform locations
   for (var attributeName in shader.attributes) {
     shader.attributes[attributeName].location = gl.getAttribLocation(shader.program, attributeName);
@@ -276,7 +254,7 @@ function initShader(gl, shader, vertex_shader_script_id, fragment_shader_script_
 *     FRAGMENT_SHADER.
 * @return {!WebGLShader} The shader.
 */
-function compileShader(gl, scriptId, shaderSource, shaderType) {
+function compileShader(gl, filename, shaderSource, shaderType) {
   // Create the shader object
   var shader = gl.createShader(shaderType);
 
@@ -290,45 +268,27 @@ function compileShader(gl, scriptId, shaderSource, shaderType) {
   var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
   if (!success) {
     // Something went wrong during compilation; get the error
-    throw "could not compile shader (" + scriptId + "):" + gl.getShaderInfoLog(shader);
+    throw "could not compile shader (" + filename + "):" + gl.getShaderInfoLog(shader);
   }
 
   return shader;
 }
- 
+
 /**
 * Creates a shader from the content of a script tag.
 *
 * @param {!WebGLRenderingContext} gl The WebGL Context.
-* @param {string} scriptId The id of the script tag.
+* @param {string} filename The filename of the script tag.
 * @param {string} opt_shaderType. The type of shader to create.
 *     If not passed in will use the type attribute from the
 *     script tag.
 * @return {!WebGLShader} A shader.
 */
-function createShaderFromScript(gl, scriptId, opt_shaderType) {
-  // look up the script tag by id.
-  var shaderScript = document.getElementById(scriptId);
-  if (!shaderScript) {
-    throw("*** Error: unknown script element" + scriptId);
-  }
+function createShaderFromScript(gl, filename, opt_shaderType) {
 
-  // extract the contents of the script tag.
-  var shaderSource = shaderScript.text;
+  var shaderSource = require(filename);
 
-  // If we didn't pass in a type, use the 'type' from
-  // the script tag.
-  if (!opt_shaderType) {
-    if (shaderScript.type == "x-shader/x-vertex") {
-      opt_shaderType = gl.VERTEX_SHADER;
-    } else if (shaderScript.type == "x-shader/x-fragment") {
-      opt_shaderType = gl.FRAGMENT_SHADER;
-    } else if (!opt_shaderType) {
-      throw("*** Error: shader type not set");
-    }
-  }
-
-  return compileShader(gl, scriptId, shaderSource, opt_shaderType);
+  return compileShader(gl, filename, shaderSource, opt_shaderType);
 };
 
 /**
@@ -339,26 +299,26 @@ function createShaderFromScript(gl, scriptId, opt_shaderType) {
 * @param {!WebGLShader} fragmentShader A fragment shader.
 * @return {!WebGLProgram} A program.
 */
-function createProgram(gl, vertexShader, fragmentShader) { 
-  // create a program. 
-  var program = gl.createProgram(); 
+function createProgram(gl, vertexShader, fragmentShader) {
+  // create a program.
+  var program = gl.createProgram();
 
-  // attach the shaders. 
-  gl.attachShader(program, vertexShader); 
-  gl.attachShader(program, fragmentShader); 
+  // attach the shaders.
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
 
-  // link the program. 
-  gl.linkProgram(program); 
+  // link the program.
+  gl.linkProgram(program);
 
-  // Check if it linked. 
-  var success = gl.getProgramParameter(program, gl.LINK_STATUS); 
-  if (!success) { 
-     // something went wrong with the link 
-     throw ("program filed to link:" + gl.getProgramInfoLog (program)); 
-  } 
+  // Check if it linked.
+  var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+  if (!success) {
+     // something went wrong with the link
+     throw ("program filed to link:" + gl.getProgramInfoLog (program));
+  }
 
-  return program; 
-}; 
+  return program;
+};
 
 /**
 * Creates a program from 2 script tags.
@@ -368,10 +328,10 @@ function createProgram(gl, vertexShader, fragmentShader) {
 * @param {string} fragmentShaderId The id of the fragment shader script tag.
 * @return {!WebGLProgram} A program
 */
-function createProgramFromScripts(gl, vertexShaderId, fragmentShaderId) {
-  var vertexShader = createShaderFromScript(gl, vertexShaderId);
-  var fragmentShader = createShaderFromScript(gl, fragmentShaderId);
-  return createProgram(gl, vertexShader, fragmentShader);
+function createProgramFromScripts(gl, shaderName, shader) {
+  var vertexShader = createShaderFromScript(gl, `glsl/${shaderName}_vs.glsl`, gl.VERTEX_SHADER);
+  var fragmentShader = createShaderFromScript(gl, `glsl/${shaderName}_fs.glsl`, gl.FRAGMENT_SHADER);
+  shader.program = createProgram(gl, vertexShader, fragmentShader);
 }
 
 module.exports = Graphics;

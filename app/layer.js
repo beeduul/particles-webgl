@@ -73,10 +73,16 @@ class Layer {
     }
     gl.useProgram(shader.program);
 
-    gl.uniform1f(shader.uniforms.nowTime.location, time.nowTime);
-    var maxLifeTime = this.getPaletteParam('age').max;
-    gl.uniform1f(shader.uniforms.maxLifeTime.location, maxLifeTime);
-    gl.uniform1f(shader.uniforms.deltaTime.location, time.deltaTime);
+    if (shader.uniforms.nowTime) {
+      gl.uniform1f(shader.uniforms.nowTime.location, time.nowTime);
+    }
+    if (shader.uniforms.maxLifeTime) {
+      var maxLifeTime = this.getPaletteParam('age').max;
+      gl.uniform1f(shader.uniforms.maxLifeTime.location, maxLifeTime);
+    }
+    if (shader.uniforms.deltaTime) {
+      gl.uniform1f(shader.uniforms.deltaTime.location, time.deltaTime);
+    }
 
 
     for (var tx_idx = 0; tx_idx < this.simulation.NUM_TEXTURES; tx_idx++) {
@@ -84,7 +90,6 @@ class Layer {
       gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[tx_idx]);
       gl.uniform1i(shader.uniforms["uTexture" + tx_idx].location, tx_idx);
     }
-
 
     if (this.drawType == gl.POINTS) {
       // bind the particleUV vertex buffer to GPU

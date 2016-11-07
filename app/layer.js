@@ -136,19 +136,23 @@ class Layer {
   
   // pointer event handling
 
+  getCurrentColor() {
+    // this.setPaletteValue('colorHue', Math.random() * 360);
+    let s = this.getPaletteValue('saturation');
+    let hsv = Color.createHSV( {
+      h: this.getPaletteValue('colorHue'),
+      s: s
+    } );
+    return Color.hsvToRgb(hsv);
+  }
+
   handlePointerEvent(event) {
     var eventPos = new glMatrix.vec2.fromValues(event.x, event.y);
 
     if (event.type == "mousedown") {
 
-      // this.setPaletteValue('colorHue', Math.random() * 360);
-      var s = this.getPaletteValue('saturation');
-      let hsv = Color.createHSV( {
-        h: this.getPaletteValue('colorHue'),
-        s: s
-      } );
-      this.rgb = Color.hsvToRgb(hsv);
-    
+      this.rgb = this.getCurrentColor();
+      
       this.vcr.recordEvent(eventPos, this.rgb);
     
       this.addParticlesAt(eventPos, this.rgb, this.time);

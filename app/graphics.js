@@ -56,9 +56,6 @@ var Graphics = {
     this.canvas = canvas;
     this.onWindowResize();
 
-    this.lastLoc = null;
-    this.accelAngle = Math.random() * Math.PI * 2.0;
-
     // init gl
     this.gl = GLUtil.initWebGL(this.canvas);
     GLUtil.setupGL(this.canvas, ["WEBGL_draw_buffers", "OES_texture_float"]); // OES_vertex_array_object

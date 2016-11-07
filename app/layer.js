@@ -14,6 +14,10 @@ function clamp(val, min, max) {
 
 class Layer {
   constructor(palette_params, shaders) {
+
+    this.lastLoc = null;
+    this.accelAngle = Math.random() * Math.PI * 2.0;
+
     this.shaders = shaders; // TODO deep copy
 
     this.drawType = GLUtil.gl().LINES;

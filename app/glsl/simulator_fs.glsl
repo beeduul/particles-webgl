@@ -44,15 +44,28 @@ void main() {
 
     vec2 accel = pdata1.xy;
     float decay = pdata1.z;
-    pos += velocity * deltaTime / 1000.0;
-    velocity *= decay * deltaTime / 1000.0;
-    velocity += accel * deltaTime / 1000.0;
+    
+    float deltaMs = deltaTime / 1000.0;
+    
+    pos += velocity * deltaMs;
+    velocity *= decay * deltaMs;
+    velocity += accel * deltaMs;
     accel *= decay;
+
+    float rot = pdata5.x;
+    float rotVel = pdata5.y;
+    float rotAccel = pdata5.z;
+    
+    rot += rotVel * deltaMs;
+    rotVel *= decay;
+    //rotVel += rotAccel * deltaMs;
+    rotAccel *= decay;
 
     gl_FragData[0] = vec4(pos, velocity);
     gl_FragData[1] = vec4(accel, pdata1.zw);
     gl_FragData[2] = pdata2;
     gl_FragData[3] = pdata3;
     gl_FragData[4] = pdata4;
+    gl_FragData[5] = vec4(rot, rotVel, rotAccel, pdata5.w);
   }
 }

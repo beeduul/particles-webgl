@@ -289,6 +289,11 @@ class Layer {
         txArr[4][2] = 0;
         txArr[4][3] = 0;
 
+        txArr[5][0] = pAngle; // Math.random() * Math.PI * 2.0; // pAngle;
+        txArr[5][1] = (Math.random() - 0.5) / 2 * glMatrix.vec2.length(dragVector) / 3;
+        txArr[5][2] = 0;
+        txArr[5][3] = 0;
+
         this.simulation.loadParticleOntoGPU(txArr);
       }
       

@@ -55,11 +55,9 @@ void main() {
     gl_PointSize = size;
   }
 
-  // TODO: adjust x & y by size... something like:
-  // x -> pos.x + aX * cos(r) * size
-  // y -> pos.y + aX * sin(r) * size
-  float x = pos.x + aX;
-  float y = pos.y;
+  float r = pdata5.x;  
+  float x = pos.x + aX * cos(r) * size / 20.0;
+  float y = pos.y + aX * sin(r) * size / 20.0;
   float z = (birth - oldest) / maxLifeTime;
   gl_Position = vec4(x, y, z, 1.0);
 

@@ -37,6 +37,7 @@ var Graphics = {
       },
     },
     simulator: {
+      dataBufferCount: 6,
       name: 'simulator',
       attributes: {
         aPosition: {},
@@ -218,7 +219,7 @@ function initShader(gl, shaderName, shaders)
     }
   }
   
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < shaders.simulator.dataBufferCount; i++) {
     var uniformName = `uTexture${i}`;
     var glLoc = gl.getUniformLocation(shader.program, uniformName);
     console.log(`${shaderName}: uniform ${uniformName} - ${glLoc}`)

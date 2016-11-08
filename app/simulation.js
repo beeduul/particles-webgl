@@ -2,7 +2,6 @@
 
 let GLUtil = require('gl_util');
 
-const NUM_TEXTURES = 5;
 const SIMULATION_DIM = 256;
 
 function createTriVertexBuffer(gl) {
@@ -121,7 +120,6 @@ class Simulation {
     this.num_particles = 0;
     this.params = {};
 
-    this.NUM_TEXTURES = NUM_TEXTURES;
     this.SIMULATION_DIM = SIMULATION_DIM;
     
     // initBuffers - for simulation - create textures, create framebuffer, bind textures to framebuffer, setup gl_FragData outputs for simulation shader
@@ -130,6 +128,10 @@ class Simulation {
   
   isInitialized() {
     return (this.current && this.previous);
+  }
+  
+  dataBufferCount() {
+    return this.simulation_shader.dataBufferCount;
   }
   
   initBuffers() {
@@ -158,7 +160,7 @@ class Simulation {
         textures: []
       }
     
-      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+      for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
         var tx = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, tx);
@@ -178,7 +180,7 @@ class Simulation {
     
       gl.bindFramebuffer(gl.FRAMEBUFFER, state.frame_buffer);
       var color_attachments = [];
-      for (var color_attachment_idx = 0; color_attachment_idx < NUM_TEXTURES; color_attachment_idx++) {
+      for (var color_attachment_idx = 0; color_attachment_idx < this.dataBufferCount(); color_attachment_idx++) {
         color_attachments[color_attachment_idx] = (draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + color_attachment_idx); // gl_FragData[color_attachment_idx]
       }
     
@@ -186,7 +188,7 @@ class Simulation {
       
       console.log("color_attachments: ", color_attachments);
 
-      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+      for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
         var tx = state.textures[tx_idx];
         gl.framebufferTexture2D(gl.FRAMEBUFFER, color_attachments[tx_idx], gl.TEXTURE_2D, tx, 0);
         console.log("framebufferTexture2D for color_attachment", color_attachments[tx_idx], ", tx: ", tx);
@@ -205,7 +207,7 @@ class Simulation {
       
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       
-      for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+      for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
         var tx = state.textures[tx_idx];
         var aux_fb = gl.createFramebuffer();
         state.aux_frame_buffers[tx_idx] = aux_fb;
@@ -259,7 +261,7 @@ class Simulation {
     // update shader uniforms
 
     // enable texture samplers in shader
-    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+    for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
       gl.activeTexture(gl.TEXTURE0 + tx_idx);
       gl.bindTexture(gl.TEXTURE_2D, this.previous.textures[tx_idx]);
       gl.uniform1i(shader.uniforms["uTexture" + tx_idx].location, tx_idx);
@@ -326,7 +328,7 @@ class Simulation {
     const sim_width = SIMULATION_DIM;
     const sim_height = SIMULATION_DIM;
       
-    for (var tx_idx = 0; tx_idx < NUM_TEXTURES; tx_idx++) {
+    for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
       var tx = this.previous.textures[tx_idx];
       var aux_fb = this.previous.aux_frame_buffers[tx_idx];
   

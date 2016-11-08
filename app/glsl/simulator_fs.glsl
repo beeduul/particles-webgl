@@ -10,6 +10,7 @@ uniform sampler2D uTexture1; // accel x, accel y, decay, sz
 uniform sampler2D uTexture2; // birth r, g, b, time
 uniform sampler2D uTexture3; // death r, g, b, time
 uniform sampler2D uTexture4; // sz, pulse, n/a, n/a
+uniform sampler2D uTexture5; // rot, rotVel, rotAccel, n/a
 
 void main() {
   vec2 uv = gl_FragCoord.xy / uResolution.xy;
@@ -19,6 +20,7 @@ void main() {
   vec4 pdata2 = texture2D(uTexture2, uv);
   vec4 pdata3 = texture2D(uTexture3, uv);
   vec4 pdata4 = texture2D(uTexture4, uv);
+  vec4 pdata5 = texture2D(uTexture5, uv);
 
   float birth = pdata2.w;
   float death = pdata3.w;
@@ -29,6 +31,7 @@ void main() {
     gl_FragData[2] = vec4(0.0);
     gl_FragData[3] = vec4(0.0);
     gl_FragData[4] = vec4(0.0);
+    gl_FragData[5] = vec4(0.0);
   } else {
 
     vec2 pos = pdata0.xy;

@@ -89,10 +89,13 @@ class Layer {
     }
 
 
-    for (var tx_idx = 0; tx_idx < this.simulation.NUM_TEXTURES; tx_idx++) {
-      gl.activeTexture(gl.TEXTURE0 + tx_idx);
-      gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[tx_idx]);
-      gl.uniform1i(shader.uniforms["uTexture" + tx_idx].location, tx_idx);
+    for (var tx_idx = 0; tx_idx < this.simulation.dataBufferCount(); tx_idx++) {
+      var uniform = shader.uniforms["uTexture" + tx_idx];
+      if (uniform) {
+        gl.activeTexture(gl.TEXTURE0 + tx_idx);
+        gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[tx_idx]);
+        gl.uniform1i(uniform.location, tx_idx);
+      }
     }
 
     if (this.drawType == gl.POINTS) {
@@ -180,7 +183,7 @@ class Layer {
   addParticlesAt(loc, rgb, time) {
 
     var txArr = [];
-    for (var n = 0; n < this.simulation.NUM_TEXTURES; n++) {
+    for (var n = 0; n < this.simulation.dataBufferCount(); n++) {
       txArr.push([]);
     }
 

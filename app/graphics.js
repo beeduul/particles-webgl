@@ -44,10 +44,10 @@ var Graphics = {
     },
   },
 
-  initShaders: function() {
+  initShaders: function(gl) {
     for (var shaderName in this.shaders) {
       console.log(shaderName);
-      initShader(this.gl, shaderName, this.shaders);
+      initShader(gl, shaderName, this.shaders);
     }
   },
 
@@ -57,11 +57,11 @@ var Graphics = {
     this.onWindowResize();
 
     // init gl
-    this.gl = GLUtil.initWebGL(this.canvas);
+    var gl = GLUtil.initWebGL(this.canvas);
     GLUtil.setupGL(this.canvas, ["WEBGL_draw_buffers", "OES_texture_float"]); // OES_vertex_array_object
 
     // init shaders
-    this.initShaders();
+    this.initShaders(gl);
 
     const PALETTE_PARAMS = {
       symmetry:         { default: 4,     min: 1,     max: 16    },

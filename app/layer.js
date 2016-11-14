@@ -20,7 +20,7 @@ class Layer {
 
     this.shaders = shaders; // TODO deep copy
 
-    this.drawType = GLUtil.gl().LINES;
+    this.drawType = GLUtil.gl().TRIS;
 
     this.palette = new Palette(palette_params);
     this.simulation = new Simulation(this.shaders.simulator);
@@ -108,26 +108,42 @@ class Layer {
       );
 
       gl.drawArrays(gl.POINTS, 0, this.simulation.particleUV.count);
-    } else {
+    } else if (this.drawType == gl.LINES) {
       gl.enableVertexAttribArray(shader.attributes.aUV.location); // indices into 0, 0, 1, 1, 2, 2
       gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleLineUV.buffer);
       gl.vertexAttribPointer(
         shader.attributes.aUV.location,
         this.simulation.particleLineUV.numComponents, gl.FLOAT, false, 0, 0
       );
-      
-      gl.enableVertexAttribArray(shader.attributes.aX.location);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleX.buffer);
+
+      gl.enableVertexAttribArray(shader.attributes.aVert.location);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleVerts.buffer);
       gl.vertexAttribPointer(
-        shader.attributes.aX.location,
-        this.simulation.particleX.numComponents, gl.FLOAT, false, 0, 0
+        shader.attributes.aVert.location,
+        this.simulation.particleVerts.numComponents, gl.FLOAT, false, 0, 0
       );
 
       // gl.lineWidth(1.0);
-      
       gl.drawArrays(gl.LINES, 0, this.simulation.particleLineUV.count);
+      gl.disableVertexAttribArray(shader.attributes.aVert.location);
       
-      gl.disableVertexAttribArray(shader.attributes.aX.location);
+    } else if (this.drawType == gl.TRIS) {
+      gl.enableVertexAttribArray(shader.attributes.aUV.location);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleTriUV.buffer);
+      gl.vertexAttribPointer(
+        shader.attributes.aUV.location,
+        this.simulation.particleTriUV.numComponents, gl.FLOAT, false, 0, 0
+      );
+      
+      gl.enableVertexAttribArray(shader.attributes.aVert.location);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleTris.buffer);
+      gl.vertexAttribPointer(
+        shader.attributes.aVert.location,
+        this.simulation.particleTris.numComponents, gl.FLOAT, false, 0, 0
+      );
+      
+      gl.drawArrays(gl.TRIANGLES, 0, this.simulation.particleTriUV.count);
+      gl.disableVertexAttribArray(shader.attributes.aVert.location);
     } 
     
     // gl.bindTexture(gl.TEXTURE_2D, null);
@@ -289,7 +305,7 @@ class Layer {
         txArr[4][2] = 0;
         txArr[4][3] = 0;
 
-        txArr[5][0] = pAngle; // Math.random() * Math.PI * 2.0; // pAngle;
+        txArr[5][0] = pLastAngle;
         txArr[5][1] = (Math.random() - 0.5) / 2 * glMatrix.vec2.length(dragVector) / 3;
         txArr[5][2] = 0;
         txArr[5][3] = 0;

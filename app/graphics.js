@@ -33,7 +33,7 @@ var Graphics = {
      name: 'painter',
       attributes: {
         aUV: {},
-        aX: {},
+        aVert: {},
       },
     },
     simulator: {

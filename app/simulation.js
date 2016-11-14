@@ -27,7 +27,7 @@ function createQuadVertexBuffer(gl) {
   return GLUtil.createVertexBuffer(numComponents, data);
 }
 
-function createFullScreenQuadVertexBuffer(gl) {
+function createFullScreenQuadVertexBuffer() {
   const numComponents = 3;
   const data = new Float32Array([
    -1.0, -1.0,  0.0,
@@ -41,7 +41,7 @@ function createFullScreenQuadVertexBuffer(gl) {
   return GLUtil.createVertexBuffer(numComponents, data);
 }
 
-function createParticleLineUV(gl) {
+function createParticlePointUVs(numPoints) {
   const width = SIMULATION_DIM;
   const height = SIMULATION_DIM;
   
@@ -49,12 +49,11 @@ function createParticleLineUV(gl) {
   var buffer = [];
   for (var y=0; y<height; ++y) {
     for (var x=0; x<width; ++x) {
-      // first vertex of the line
-      buffer.push(x/width);
-      buffer.push(y/height);
-      // second vertex of the line
-      buffer.push(x/width);
-      buffer.push(y/height);
+      for (var n = 0; n < numPoints; n++) {
+        // centerpoint first vertex of the line
+        buffer.push(x/width);
+        buffer.push(y/height);
+      }
     }
   }
   
@@ -64,25 +63,28 @@ function createParticleLineUV(gl) {
   return GLUtil.createVertexBuffer(numComponents, data);
 }
 
-function createParticleX(gl) {
+function createShapeVertices(vertexPairs) {
   const width = SIMULATION_DIM;
   const height = SIMULATION_DIM;
-  
+
   // create two x vertices for each particle, one for the beginning and one for the end of each line-drawn particle
   var buffer = [];
-  for (var y=0; y<height; ++y) {
-    for (var x=0; x<width; ++x) {
-      buffer.push(-0.1);
-      buffer.push(0.1);
+  for (var y = 0; y < height; ++y) {
+    for (var x = 0; x < width; ++x) {
+      for (var v = 0; v < vertexPairs.length; v++) {
+        buffer.push(vertexPairs[v]);
+      }
     }
   }
   
-  const numComponents = 1;
+  const numComponents = 2;
   const data = new Float32Array(buffer);
   return GLUtil.createVertexBuffer(numComponents, data);
+  
 }
 
-function createParticleUV(gl) {
+
+function createParticleUV() {
   const width = SIMULATION_DIM;
   const height = SIMULATION_DIM;
 
@@ -106,12 +108,22 @@ class Simulation {
   constructor(simulation_shader) {
     this.gl = GLUtil.gl();
 
-    this.fullScreenQuadPos = createFullScreenQuadVertexBuffer(this.gl);
+    this.fullScreenQuadPos = createFullScreenQuadVertexBuffer();
 
-    this.particleUV = createParticleUV(this.gl);
+    // used for points
+    this.particleUV = createParticleUV();
 
-    this.particleX = createParticleX(this.gl);
-    this.particleLineUV = createParticleLineUV(this.gl);
+    this.particleVerts = createShapeVertices([-1, 0, 1, 0]); // horizontal line
+    this.particleLineUV = createParticlePointUVs(2);
+    
+    this.particleTris = createShapeVertices([0, 1/2,  3/5, -1/2,  -3/5, -1/2]);
+    this.particleTriUV = createParticlePointUVs(3);
+    //
+    // this.particleQuads = createShapeVertices([1, 1,  1, -1,  -1, -1,  -1, 1]);
+    // this.particleQuadUV = createParticlePointUVs(4);
+    //
+    // this.particleHexes = createShapeVertices([1, 0,  0.5, -4/5,  -0.5, -4/5,  -1, 0,  -0.5, 4/5,  0.5, 4/5]);
+    // this.particleHexUV = createParticlePointUVs(6);
 
     this.simulation_shader = simulation_shader;
 

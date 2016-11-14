@@ -1,6 +1,6 @@
 // attribute vec2 vertexPosition;
 attribute vec2 aUV;
-attribute float aX;
+attribute vec2 aVert;
 varying vec2 vUV;
 
 uniform float nowTime;
@@ -55,9 +55,10 @@ void main() {
     gl_PointSize = size;
   }
 
+  float sizeModifier = 1.0/200.0;
   float r = pdata5.x;  
-  float x = pos.x + aX * cos(r) * size / 20.0;
-  float y = pos.y + aX * sin(r) * size / 20.0;
+  float x = pos.x + (aVert.x * cos(r) - aVert.y * sin(r)) * size * sizeModifier;
+  float y = pos.y + (aVert.x * sin(r) + aVert.y * cos(r)) * size * sizeModifier;
   float z = (birth - oldest) / maxLifeTime;
   gl_Position = vec4(x, y, z, 1.0);
 

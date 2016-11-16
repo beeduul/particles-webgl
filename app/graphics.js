@@ -66,7 +66,7 @@ var Graphics = {
 
     const PALETTE_PARAMS = {
       symmetry:         { default: 4,     min: 1,     max: 16    },
-      colorHue:         { default: 0,     min: 0,     max: 360   }, // hue is in degress
+      colorHue:         { default: Math.random() * 360,     min: 0,     max: 360   }, // hue is in degress
       saturation:       { default: 1,     min: 0,     max: 1.0   }, // saturation is 0 .. 1
       colorNoise:       { default: 0.1,   min: 0,     max: 1     },
       spray:            { default: 0,     min: 0,     max: 0.1   }, // percent of screen

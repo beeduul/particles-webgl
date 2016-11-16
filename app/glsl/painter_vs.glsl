@@ -2,6 +2,7 @@
 attribute vec2 aUV;
 attribute vec2 aVert;
 varying vec2 vUV;
+varying vec3 color3;
 
 uniform float nowTime;
 uniform float maxLifeTime;
@@ -16,7 +17,7 @@ uniform sampler2D uTexture5; // rot, rotVel, rotAccel, n/a
 
 void main() {
   vec4 pdata0 = texture2D(uTexture0, aUV);
-  vec4 pdata1 = texture2D(uTexture1, aUV);
+  // vec4 pdata1 = texture2D(uTexture1, aUV);
   vec4 pdata2 = texture2D(uTexture2, aUV);
   vec4 pdata3 = texture2D(uTexture3, aUV);
   vec4 pdata4 = texture2D(uTexture4, aUV);
@@ -51,6 +52,10 @@ void main() {
     const float TWO_PI = 6.28318530717959;
 
     size *= ((sin(TWO_PI / 1000.0 * pulseFreq * age )) + 1.0) / 2.0;
+
+    vec3 birthCol = pdata2.rgb;
+    vec3 deathCol = pdata3.rgb;
+    color3 = mix(birthCol, deathCol, age_t);
 
     gl_PointSize = size;
   }

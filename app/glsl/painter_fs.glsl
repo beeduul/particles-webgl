@@ -2,8 +2,8 @@
 precision highp float;
 #endif
 
-varying vec3 v3xyz;
 varying vec2 vUV;
+varying vec3 color3;
 
 uniform float nowTime;
 uniform float deltaTime;
@@ -28,49 +28,6 @@ void main() {
     discard;
   }
 
-  float lifetime = death - birth;
-  float age = nowTime - birth;
-
-  float age_t = age / lifetime;
-  vec3 birthCol = pdata2.rgb;
-  vec3 deathCol = pdata3.rgb;
-
-  // // circle
-  // {
-  //   float x = 2.0 * (gl_PointCoord[0] - 0.5);
-  //   float y = 2.0 * (gl_PointCoord[1] - 0.5);
-  //   float d = x * x + y * y;
-  //
-  //   // hollow
-  //   // if (d > 1.0 || d < 0.9) {
-  //   //   discard;
-  //   // }
-  //
-  //   // filled
-  //   if (d > 1.0) {
-  //     discard;
-  //   }
-  // }
-
-  // square
-  {
-    // float thickness = 0.05;
-    // if (gl_PointCoord[0] > thickness && gl_PointCoord[0] < 1.0 - thickness &&
-    //     gl_PointCoord[1] > thickness && gl_PointCoord[1] < 1.0 - thickness) {
-    //   discard;
-    // }
-  }
-
   // solid
-  {
-    gl_FragColor = vec4(mix(birthCol, deathCol, age_t), 1.0);
-  }
-
-  // fakeshaded
-  {
-    // float shadeAlpha = gl_PointCoord[0]; // left
-
-    // float shadeAlpha = (gl_PointCoord[0] + gl_PointCoord[1]) / 2.0; // upper left
-    // gl_FragColor = vec4(mix(birthCol, deathCol, age_t) * shadeAlpha, 1.0);
-  }
+  gl_FragColor = vec4(color3, 1.0);
 }

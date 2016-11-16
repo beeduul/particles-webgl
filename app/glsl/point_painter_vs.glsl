@@ -1,6 +1,7 @@
 // attribute vec2 vertexPosition;
 attribute vec2 aUV;
 varying vec2 vUV;
+varying vec3 color3;
 
 uniform float nowTime;
 uniform float maxLifeTime;
@@ -48,6 +49,10 @@ void main() {
     const float TWO_PI = 6.28318530717959;
 
     size *= ((sin(TWO_PI / 1000.0 * pulseFreq * age )) + 1.0) / 2.0;
+
+    vec3 birthCol = pdata2.rgb;
+    vec3 deathCol = pdata3.rgb;
+    color3 = mix(birthCol, deathCol, age_t);
 
     gl_PointSize = size;
   }

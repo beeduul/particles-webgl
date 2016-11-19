@@ -7,9 +7,9 @@ const SIMULATION_DIM = 256;
 function createTriVertexBuffer(gl) {
   const numComponents = 2;
   const data = new Float32Array([
-    -1.0, -1.0,
-     0.0,  1.0,
-     1.0, -1.0
+       0,  1/2,
+     3/5, -1/2,
+    -3/5, -1/2
   ]);
 
   return GLUtil.createVertexBuffer(numComponents, data);

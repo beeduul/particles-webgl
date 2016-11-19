@@ -148,7 +148,39 @@ class Layer {
       
       gl.drawArrays(gl.TRIANGLES, 0, this.simulation.particleTriUV.count);
       gl.disableVertexAttribArray(shader.attributes.aVert.location);
-    } 
+      
+    } else if (this.drawType == DRAW_TYPE.SQUARES) {
+
+      var ext = GLUtil.extensions()['ANGLE_instanced_arrays'];
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleUV.buffer);
+      gl.enableVertexAttribArray(shader.attributes.aUV.location);
+      var pUVNumComponents = this.simulation.particleUV.numComponents;
+      gl.vertexAttribPointer(
+        shader.attributes.aUV.location,
+        pUVNumComponents, gl.FLOAT, false, 0, 0
+      );
+      ext.vertexAttribDivisorANGLE(shader.attributes.aUV.location, 1);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.quadStripBuffer.buffer);
+      gl.enableVertexAttribArray(shader.attributes.aVert.location);
+      var qsbNumComponents = this.simulation.quadStripBuffer.numComponents;
+      gl.vertexAttribPointer(
+        shader.attributes.aVert.location,
+        qsbNumComponents, gl.FLOAT, false, 0, 0
+      );
+
+      var instanceCount = this.simulation.SIMULATION_DIM * this.simulation.SIMULATION_DIM;
+      ext.drawArraysInstancedANGLE(
+        gl.TRIANGLE_FAN,
+        0,
+        this.simulation.quadStripBuffer.count,
+        instanceCount
+      );
+     
+      ext.vertexAttribDivisorANGLE(shader.attributes.aUV.location, 0);
+      gl.disableVertexAttribArray(shader.attributes.aVert.location);
+    }
     
     // gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);

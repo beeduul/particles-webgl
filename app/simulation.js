@@ -4,7 +4,11 @@ let GLUtil = require('gl_util');
 
 const SIMULATION_DIM = 256;
 
-function createTriVertexBuffer(gl) {
+function createLineBuffer() {
+  return GLUtil.createVertexBuffer(2, [-1, 0, 1, 0]);
+}
+
+function createTriVertexBuffer() {
   const numComponents = 2;
   const data = new Float32Array([
        0,  1/2,
@@ -15,7 +19,7 @@ function createTriVertexBuffer(gl) {
   return GLUtil.createVertexBuffer(numComponents, data);
 }
 
-function createQuadVertexBuffer(gl) {
+function createQuadStripVertexBuffer() {
   const numComponents = 2;
   const data = new Float32Array([
     -1.0, -1.0,
@@ -110,6 +114,9 @@ class Simulation {
 
     this.fullScreenQuadPos = createFullScreenQuadVertexBuffer();
 
+    this.triBuffer = createTriVertexBuffer();
+    this.quadStripBuffer = createQuadStripVertexBuffer();
+
     // used for points
     this.particleUV = createParticleUV();
 
@@ -118,10 +125,10 @@ class Simulation {
     
     this.particleTris = createShapeVertices([0, 1/2,  3/5, -1/2,  -3/5, -1/2]);
     this.particleTriUV = createParticlePointUVs(3);
-    //
-    // this.particleQuads = createShapeVertices([1, 1,  1, -1,  -1, -1,  -1, 1]);
-    // this.particleQuadUV = createParticlePointUVs(4);
-    //
+
+    this.particleQuads = createShapeVertices([1, 1,  1, -1,  -1, -1,  -1, 1]);
+    this.particleQuadUV = createParticlePointUVs(4);
+
     // this.particleHexes = createShapeVertices([1, 0,  0.5, -4/5,  -0.5, -4/5,  -1, 0,  -0.5, 4/5,  0.5, 4/5]);
     // this.particleHexUV = createParticlePointUVs(6);
 

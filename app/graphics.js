@@ -59,7 +59,7 @@ var Graphics = {
 
     // init gl
     var gl = GLUtil.initWebGL(this.canvas);
-    GLUtil.setupGL(this.canvas, ["WEBGL_draw_buffers", "OES_texture_float"]); // OES_vertex_array_object
+    GLUtil.setupGL(this.canvas, ["WEBGL_draw_buffers", "OES_texture_float", "ANGLE_instanced_arrays"]);
 
     // init shaders
     this.initShaders(gl);

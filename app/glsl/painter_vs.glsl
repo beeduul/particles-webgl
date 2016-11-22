@@ -34,7 +34,6 @@ void main() {
   float oldest = nowTime - maxLifeTime;
 
   if (birth == 0.0 || death > 0.0 && nowTime > death) {
-    gl_PointSize = 0.0;
   } else {
 
     float lifetime = death - birth;
@@ -56,8 +55,6 @@ void main() {
     vec3 birthCol = pdata2.rgb;
     vec3 deathCol = pdata3.rgb;
     color3 = mix(birthCol, deathCol, age_t);
-
-    gl_PointSize = size;
   }
 
   float sizeModifier = 1.0/200.0;

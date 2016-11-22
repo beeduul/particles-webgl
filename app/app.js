@@ -53,6 +53,10 @@ var App = {
 
   setPaletteValue: function(name, value) {
     Graphics.setPaletteValue(name, value);
+  },
+  
+  setDrawType: function(value) {
+    Graphics.setDrawType(value);
   }
   
 };

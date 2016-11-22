@@ -1,7 +1,5 @@
 "use strict";
 
-let Enum = require('es6-enum');
-
 let GLUtil = require('gl_util');
 var glMatrix = require('gl-matrix');
 let Color = require('color');
@@ -14,7 +12,7 @@ function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
 
-const DRAW_TYPE = Enum('POINTS', 'LINES', 'TRIANGLES', 'SQUARES');
+let DrawTypes = require('drawtypes');
 
 class Layer {
   constructor(palette_params, shaders) {
@@ -24,7 +22,7 @@ class Layer {
 
     this.shaders = shaders; // TODO deep copy
 
-    this.drawType = DRAW_TYPE.SQUARES;
+    this.drawType = DrawTypes.LINES;
 
     this.palette = new Palette(palette_params);
     this.simulation = new Simulation(this.shaders.simulator);
@@ -41,7 +39,32 @@ class Layer {
   getPaletteValue(name) {
     return this.palette.getValue(name);
   }
+  
+  setDrawType(value) {
+    
+    switch(value) {
+    case 'line':
+      this.drawType = DrawTypes.LINES;
+      break;
 
+    case 'tri-filled':
+    case 'tri-stroked':
+      this.drawType = DrawTypes.TRIANGLES;
+      break;
+
+    case 'square-filled':
+    case 'square-stroked':
+      this.drawType = DrawTypes.SQUARES;
+      break;
+      
+    case 'circle-filled':
+    case 'circle-stroked':
+      this.drawType = DrawTypes.POINTS;
+      break;
+      
+    }
+  }
+  
   setRecording(bool) {
     this.vcr.recording = bool;
   }
@@ -74,7 +97,7 @@ class Layer {
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     
     var shader;
-    if (this.drawType == DRAW_TYPE.POINTS) {
+    if (this.drawType == DrawTypes.POINTS) {
       shader = this.shaders.point_painter;
     } else {
       shader = this.shaders.painter;
@@ -102,7 +125,7 @@ class Layer {
       }
     }
 
-    if (this.drawType == DRAW_TYPE.POINTS) {
+    if (this.drawType == DrawTypes.POINTS) {
       // bind the particleUV vertex buffer to GPU
       gl.enableVertexAttribArray(shader.attributes.aUV.location);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleUV.buffer);
@@ -112,7 +135,7 @@ class Layer {
       );
 
       gl.drawArrays(gl.POINTS, 0, this.simulation.particleUV.count);
-    } else if (this.drawType == DRAW_TYPE.LINES) {
+    } else if (this.drawType == DrawTypes.LINES) {
       gl.enableVertexAttribArray(shader.attributes.aUV.location); // indices into 0, 0, 1, 1, 2, 2
       gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleLineUV.buffer);
       gl.vertexAttribPointer(
@@ -131,7 +154,7 @@ class Layer {
       gl.drawArrays(gl.LINES, 0, this.simulation.particleLineUV.count);
       gl.disableVertexAttribArray(shader.attributes.aVert.location);
       
-    } else if (this.drawType == DRAW_TYPE.TRIANGLES) {
+    } else if (this.drawType == DrawTypes.TRIANGLES) {
       gl.enableVertexAttribArray(shader.attributes.aUV.location);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleTriUV.buffer);
       gl.vertexAttribPointer(
@@ -149,7 +172,7 @@ class Layer {
       gl.drawArrays(gl.TRIANGLES, 0, this.simulation.particleTriUV.count);
       gl.disableVertexAttribArray(shader.attributes.aVert.location);
       
-    } else if (this.drawType == DRAW_TYPE.SQUARES) {
+    } else if (this.drawType == DrawTypes.SQUARES) {
 
       var ext = GLUtil.extensions()['ANGLE_instanced_arrays'];
 

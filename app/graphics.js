@@ -184,6 +184,10 @@ var Graphics = {
   setPaletteValue: function(name, value) {
     this.getPaletteParam(name).value = value;
   },
+  
+  setDrawType: function(value) {
+    this.activeLayer.setDrawType(value);
+  },
 
   update: function(time) {
     this.activeLayer.update(this.canvas, time);

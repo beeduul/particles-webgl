@@ -19,6 +19,19 @@ var Checkbox = React.createClass({
   }
 });
 
+var Choices = React.createClass({
+  onInput: function(event) {
+    app.setDrawType(event.target.value);
+  },
+  
+  render: function() {
+    var options = this.props.choices.map(function(pair) {
+      return <option value={pair[0]}>{pair[1]}</option>;
+    })
+    return <select onInput={this.onInput}>{options}</select>;
+  }
+});
+
 var Slider = React.createClass({  
   toSliderValue: function() {
     var param = app.getPaletteParam(this.props.param);
@@ -70,6 +83,15 @@ var UI = React.createClass({
         <Slider param={'saturation'} />
         <Slider param={'accel'} />
         <Slider param={'decay'} />
+        <Choices choices={ [
+          ['line',           '\u007c'],
+          // ['tri-filled',     '\u25B2'],
+          ['tri-stroked',    '\u25B3'],
+          // ['square-filled',  '\u25A0'],
+          ['square-stroked', '\u25A1'],
+          ['circle-filled',  '\u25CF'],
+          // ['circle-stroked', '\u25CB']
+        ] } />
       </div>
     )
   }

@@ -4,33 +4,6 @@ let GLUtil = require('gl_util');
 
 const SIMULATION_DIM = 256;
 
-function createLineBuffer() {
-  return GLUtil.createVertexBuffer(2, [-1, 0, 1, 0]);
-}
-
-function createTriVertexBuffer() {
-  const numComponents = 2;
-  const data = new Float32Array([
-       0,  1/2,
-     3/5, -1/2,
-    -3/5, -1/2
-  ]);
-
-  return GLUtil.createVertexBuffer(numComponents, data);
-}
-
-function createQuadStripVertexBuffer() {
-  const numComponents = 2;
-  const data = new Float32Array([
-    -1.0, -1.0,
-    -1.0,  1.0,
-     1.0,  1.0,
-     1.0, -1.0
-  ]);
-
-  return GLUtil.createVertexBuffer(numComponents, data);
-}
-
 function createFullScreenQuadVertexBuffer() {
   const numComponents = 3;
   const data = new Float32Array([
@@ -114,8 +87,18 @@ class Simulation {
 
     this.fullScreenQuadPos = createFullScreenQuadVertexBuffer();
 
-    this.triBuffer = createTriVertexBuffer();
-    this.quadStripBuffer = createQuadStripVertexBuffer();
+    this.triBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
+         0,  1/2,
+       3/5, -1/2,
+      -3/5, -1/2
+    ]));
+
+    this.quadStripBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
+      -1.0, -1.0,
+      -1.0,  1.0,
+       1.0,  1.0,
+       1.0, -1.0
+    ]));
 
     // used for points
     this.particleUV = createParticleUV();

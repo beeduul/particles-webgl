@@ -26,7 +26,7 @@ var Choices = React.createClass({
   
   render: function() {
     var options = this.props.choices.map(function(pair) {
-      return <option value={pair[0]}>{pair[1]}</option>;
+      return <option key={pair[0]} value={pair[0]}>{pair[1]}</option>;
     })
     return <select onInput={this.onInput}>{options}</select>;
   }

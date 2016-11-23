@@ -4,112 +4,27 @@ let glsl = require('glslify');
 
 let GLUtil = require('gl_util');
 
-let Layer = require('layer');
-
 var Graphics = {
 
   gl: null,
-  canvas: null,
   width: undefined,
   height: undefined,
 
-  shaders: {
-    // example: {
-    //   program: undefined, // created in initShaders
-    //   attributes: {
-    //     attr_name: {}
-    //   },
-    //   uniforms: {
-    //     uniform_name: { value: value }
-    //   }
-    // },
-    point_painter: {
-      name: 'point_painter',
-      attributes: {
-        aUV: {}
-      },
-    },
-    painter: {
-     name: 'painter',
-      attributes: {
-        aUV: {},
-        aVert: {},
-      },
-    },
-    simulator: {
-      dataBufferCount: 6,
-      name: 'simulator',
-      attributes: {
-        aPosition: {},
-      },
-    },
-  },
-
-  initShaders: function(gl) {
-    for (var shaderName in this.shaders) {
+  initShaders: function(gl, shaders) {
+    for (var shaderName in shaders) {
       console.log(shaderName);
-      initShader(gl, shaderName, this.shaders);
+      initShader(gl, shaderName, shaders);
     }
   },
 
-  init: function(canvas) {
-    // init canvas
-    this.canvas = canvas;
-    this.onWindowResize();
-
+  init: function(canvas, shaders) {
     // init gl
-    var gl = GLUtil.initWebGL(this.canvas);
-    GLUtil.setupGL(this.canvas, ["WEBGL_draw_buffers", "OES_texture_float", "ANGLE_instanced_arrays"]);
+    var gl = GLUtil.initWebGL(canvas);
+    GLUtil.setupGL(canvas, ["WEBGL_draw_buffers", "OES_texture_float", "ANGLE_instanced_arrays"]);
 
     // init shaders
-    this.initShaders(gl);
+    this.initShaders(gl, shaders);
 
-    const PALETTE_PARAMS = {
-      symmetry:         { default: 4,     min: 1,     max: 16    },
-      colorHue:         { default: Math.random() * 360,     min: 0,     max: 360   }, // hue is in degress
-      saturation:       { default: 1,     min: 0,     max: 1.0   }, // saturation is 0 .. 1
-      colorNoise:       { default: 0.1,   min: 0,     max: 1     },
-      spray:            { default: 0,     min: 0,     max: 0.1   }, // percent of screen
-      size:             { default: 25.0,  min: 1,     max: 100   },
-      age:              { default: 2500,  min: 500,   max: 30000 }, // ms
-      pulse:            { default: 0,     min: 0,     max: 2.0   },  // pulses per second
-      flow:             { default: 50,    min: 10,    max: 250   },  // particles per second
-      accel:            { default: 0,     min: -10,   max: 10     },
-      decay:            { default: 0.999, min: 0.95,  max: 1     }
-    };
-
-    this.layer = new Layer(PALETTE_PARAMS, this.shaders);
-    this.activeLayer = this.layer;
-
-    canvas.addEventListener("mousedown", function(event) {
-      this.handleMouseEvent(event);
-    }.bind(this));
-
-    canvas.addEventListener("mousemove", function(event) {
-      this.handleMouseEvent(event);
-    }.bind(this));
-
-    canvas.addEventListener("mouseup", function(event) {
-      this.handleMouseEvent(event);
-    }.bind(this));
-
-    (function(self) {
-      window.addEventListener(
-        'resize', function() {self.onWindowResize();}, false
-      );
-
-      ['keydown', 'keypress', 'keyup'].forEach(function(eventType) {
-        window.addEventListener(eventType, function(event) {
-          self.handleKeyEvent(event);
-        });
-      });
-
-      window.addEventListener('mousewheel', function(event) {
-        console.log(event);
-        event.preventDefault();
-      });
-
-    })(this);
 
   },
 
@@ -144,64 +59,6 @@ var Graphics = {
       this.exitFullScreen();
     }
   },
-
-  handleKeyEvent: function(event) {
-    switch(event.type) {
-    case "keydown":
-      switch(event.key) {
-      case "r":
-        this.activeLayer.setRecording(true);
-        break;
-      case "f":
-        this.toggleFullScreen();
-        break;
-      }
-      break;
-    case "keyup":
-      switch(event.key) {
-      case "r":
-        this.activeLayer.setRecording(false);
-        break;
-      }
-
-    case "keypress":
-      break;
-    }
-  },
-
-  handleMouseEvent: function(event) {
-    this.activeLayer.handlePointerEvent(event);
-  },
-
-  getPaletteParam: function(name) {
-    return this.activeLayer.getPaletteParam(name);
-  },
-
-  getPaletteValue: function(name) {
-    return this.activeLayer.getPaletteValue(name);
-  },
-
-  setPaletteValue: function(name, value) {
-    this.getPaletteParam(name).value = value;
-  },
-  
-  setDrawType: function(value) {
-    this.activeLayer.setDrawType(value);
-  },
-
-  update: function(time) {
-    this.activeLayer.update(this.canvas, time);
-  },
-
-  onWindowResize: function() {
-    this.width = this.canvas.offsetWidth;
-    this.height = this.canvas.offsetHeight;
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
-    // this.camera.aspect = this.width/this.height;
-  },
-
-
 
 };
 

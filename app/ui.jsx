@@ -68,21 +68,19 @@ var Slider = React.createClass({
   }
 });
 
-var UI = React.createClass({
+var LayerPalette = React.createClass({
   render: function() {
+
+    const sliderKeys = ['size', 'age', 'flow', 'symmetry', 'pulse', 'spray', 'colorNoise', 'colorHue', 'saturation', 'accel', 'decay'];
+
+    let self = this;
+    let sliders = sliderKeys.map(function(key) {
+      return <Slider layer={self.props.layer} param={key} key={key} />
+    });
+
     return (
       <div id="palette">
-        <Slider param={'size'} />
-        <Slider param={'age'} />
-        <Slider param={'flow'} />
-        <Slider param={'symmetry'} />
-        <Slider param={'pulse'} />
-        <Slider param={'spray'} />
-        <Slider param={'colorNoise'} />
-        <Slider param={'colorHue'} />
-        <Slider param={'saturation'} />
-        <Slider param={'accel'} />
-        <Slider param={'decay'} />
+        { sliders }
         <Choices choices={ [
           ['line',           '\u007c'],
           // ['tri-filled',     '\u25B2'],
@@ -92,16 +90,58 @@ var UI = React.createClass({
           ['circle-filled',  '\u25CF'],
           // ['circle-stroked', '\u25CB']
         ] } />
-      </div>
+      </div>      
     )
   }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-  app.init();
+var SelectLayerButton = React.createClass({
+  handleClick: function() {
+    app.selectLayer(this.props.layerIndex);
+  },
   
-  var ui = document.getElementById("ui");
-  console.log("DOMContentLoaded, ui:", ui);
-  ReactDOM.render(<UI/>, ui);
+  render: function() {
+    const className = "layer " + (this.props.isActive ? " active" : "");
+    return <div className={className} onClick={this.handleClick}>[{this.props.layerIndex + 1}]</div>
+  }
+});
 
+var AddLayerButton = React.createClass({
+  handleClick: function() {
+    app.addLayer();
+  },
+  
+  render: function() {
+    return <div className='layer' onClick={this.handleClick}>[ + ]</div>;
+  }
+});
+
+var UI = React.createClass({
+  render: function() {
+    
+    let layers = [];
+    for (let i = 0; i < app.layers.length; i++) {
+      let isActive = app.layers[i] == app.activeLayer;
+      layers.push(<SelectLayerButton isActive={isActive} layerIndex={i} />);
+    }
+    layers.push(<AddLayerButton />);
+    
+    return (
+      <div>
+        <div id='layers'>
+          { layers }
+        </div>
+        <LayerPalette layer={app.activeLayer} />
+      </div>
+    );
+  }
+});
+
+var updateUI = function() {
+  var ui = document.getElementById("ui");
+  ReactDOM.render(<UI/>, ui);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  app.init(updateUI);
 }, false);

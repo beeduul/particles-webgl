@@ -26,3 +26,17 @@ body {
 .parameter span.title {
   color: white;
 }
+
+.layer {
+  color: white;
+  display: inline-block;
+}
+
+.layer.active {
+  color: yellow;
+  font-weight: bold;
+}
+
+.layer:hover {
+  color: blue;
+}

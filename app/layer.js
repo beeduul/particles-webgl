@@ -88,7 +88,6 @@ class Layer {
     var gl = GLUtil.gl();
     
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.GREATER);

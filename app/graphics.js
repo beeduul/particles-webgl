@@ -19,13 +19,7 @@ var Graphics = {
 
   init: function(canvas, shaders) {
     // init gl
-    var gl = GLUtil.initWebGL(canvas);
     GLUtil.setupGL(canvas, ["WEBGL_draw_buffers", "OES_texture_float", "ANGLE_instanced_arrays"]);
-
-    // init shaders
-    this.initShaders(gl, shaders);
-
-
   },
 
   requestFullScreen: function(element) {

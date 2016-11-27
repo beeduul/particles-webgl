@@ -1,6 +1,7 @@
 "use strict";
 
-var Graphics = require('graphics');
+let GLUtil = require('gl_util');
+let Graphics = require('graphics');
 let Layer = require('layer');
 
 var FPSLimit = 30;
@@ -46,16 +47,11 @@ var App = {
     return this.start_time != undefined;
   },
 
-  init: function () {
-
-    var canvas = this.canvas = document.getElementById("glcanvas");
-    Graphics.init(canvas, this.shaders);
-    this.onWindowResize();
-    
-    
-    const PALETTE_PARAMS = {
+  getPaletteParams: function() {
+    var hue = Math.random() * 360;
+    return {
       symmetry:         { default: 4,     min: 1,     max: 16    },
-      colorHue:         { default: Math.random() * 360,     min: 0,     max: 360   }, // hue is in degress
+      colorHue:         { default: hue,   min: 0,     max: 360   }, // hue is in degress
       saturation:       { default: 1,     min: 0,     max: 1.0   }, // saturation is 0 .. 1
       colorNoise:       { default: 0.1,   min: 0,     max: 1     },
       spray:            { default: 0,     min: 0,     max: 0.1   }, // percent of screen
@@ -63,12 +59,25 @@ var App = {
       age:              { default: 2500,  min: 500,   max: 30000 }, // ms
       pulse:            { default: 0,     min: 0,     max: 2.0   },  // pulses per second
       flow:             { default: 50,    min: 10,    max: 250   },  // particles per second
-      accel:            { default: 0,     min: -10,   max: 10     },
+      accel:            { default: 0,     min: -10,   max: 10    },
       decay:            { default: 0.999, min: 0.95,  max: 1     }
     };
+  },
 
-    this.layer = new Layer(PALETTE_PARAMS, this.shaders);
-    this.activeLayer = this.layer;
+  init: function (updateUICallback) {
+
+    this.updateUICallback = updateUICallback;
+
+    var canvas = this.canvas = document.getElementById("glcanvas");
+    Graphics.init(canvas);
+
+    // init shaders
+    Graphics.initShaders(GLUtil.gl(), this.shaders);
+    
+    this.onWindowResize();
+    
+    this.layers = [];
+    this.addLayer();
 
     canvas.addEventListener("mousedown", function(event) {
       this.handleMouseEvent(event);
@@ -107,6 +116,20 @@ var App = {
 
   },
   
+  addLayer() {
+    let shaders = this.shaders;
+    
+    this.activeLayer = new Layer(this.getPaletteParams(), shaders);
+    this.layers.push(this.activeLayer);
+    this.dirty = true;
+  },
+  
+  selectLayer(layerIndex) {
+    this.activeLayer = this.layers[layerIndex];
+    console.log(`selected ${layerIndex}`, this.activeLayer);
+    this.dirty = true;
+  },
+  
   onWindowResize: function() {
     this.width = this.canvas.offsetWidth;
     this.height = this.canvas.offsetHeight;
@@ -120,10 +143,22 @@ var App = {
     var nowTime = Date.now() - this.start_time;
     var deltaTime = nowTime - this.last_time;
 
+    if (this.dirty) {
+      this.updateUICallback();
+      this.dirty = false;
+    }
+
     if (nowTime - this.last_time > 1000 / FPSLimit) {
+      var gl = GLUtil.gl();
+
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
       this.last_time = nowTime;
       let time = { nowTime: nowTime, deltaTime: deltaTime };      
-      this.activeLayer.update(this.canvas, time);
+      for (let i = 0; i < this.layers.length; i++) {
+        this.layers[i].update(this.canvas, time);
+      }
     }
 
     var fn = this.update.bind(this);

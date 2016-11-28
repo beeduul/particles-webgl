@@ -269,7 +269,7 @@ class Layer {
 
     let wander = false;// this.getPaletteValue('wander');
     if (wander) {
-      this.accelAngle += Math.random() * Math.PI * 2.0 / 100.0;
+      this.accelAngle += (Math.random() - 0.5) * 2.0 * Math.PI * 2.0 / 100.0;
     }
 
     var numSymmetries = Math.ceil(this.getPaletteValue('symmetry'));

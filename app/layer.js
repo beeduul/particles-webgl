@@ -12,6 +12,11 @@ function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
 
+let uid = 0;
+function getUID() {
+  return uid++;
+}
+
 let DrawTypes = require('drawtypes');
 
 class Layer {
@@ -30,6 +35,8 @@ class Layer {
     this.vcr = new VCR();
 
     this.addAccumulator = 0;
+
+    this.uid = getUID();
   }
 
   getPaletteParam(name) {
@@ -41,28 +48,8 @@ class Layer {
   }
   
   setDrawType(value) {
-    
-    switch(value) {
-    case 'line':
-      this.drawType = DrawTypes.LINES;
-      break;
-
-    case 'tri-filled':
-    case 'tri-stroked':
-      this.drawType = DrawTypes.TRIANGLES;
-      break;
-
-    case 'square-filled':
-    case 'square-stroked':
-      this.drawType = DrawTypes.SQUARES;
-      break;
-      
-    case 'circle-filled':
-    case 'circle-stroked':
-      this.drawType = DrawTypes.POINTS;
-      break;
-      
-    }
+    DrawTypes.checkDrawType(value);
+    this.drawType = value;
   }
   
   setRecording(bool) {
@@ -96,7 +83,7 @@ class Layer {
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     
     var shader;
-    if (this.drawType == DrawTypes.POINTS) {
+    if (this.drawType == DrawTypes.CIRCLE_SHADED) {
       shader = this.shaders.point_painter;
     } else {
       shader = this.shaders.painter;
@@ -124,7 +111,7 @@ class Layer {
       }
     }
 
-    if (this.drawType == DrawTypes.POINTS) {
+    if (this.drawType == DrawTypes.CIRCLE_SHADED) {
       // bind the particleUV vertex buffer to GPU
       gl.enableVertexAttribArray(shader.attributes.aUV.location);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleUV.buffer);
@@ -153,7 +140,7 @@ class Layer {
       gl.drawArrays(gl.LINES, 0, this.simulation.particleLineUV.count);
       gl.disableVertexAttribArray(shader.attributes.aVert.location);
       
-    } else if (this.drawType == DrawTypes.TRIANGLES) {
+    } else if (this.drawType == DrawTypes.TRI_STROKED) {
       gl.enableVertexAttribArray(shader.attributes.aUV.location);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleTriUV.buffer);
       gl.vertexAttribPointer(
@@ -171,7 +158,7 @@ class Layer {
       gl.drawArrays(gl.TRIANGLES, 0, this.simulation.particleTriUV.count);
       gl.disableVertexAttribArray(shader.attributes.aVert.location);
       
-    } else if (this.drawType == DrawTypes.SQUARES) {
+    } else if (this.drawType == DrawTypes.SQUARE_STROKED) {
 
       var ext = GLUtil.extensions()['ANGLE_instanced_arrays'];
 

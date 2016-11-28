@@ -204,12 +204,8 @@ var App = {
 
   setPaletteValue: function(name, value) {
     this.getPaletteParam(name).value = value;
-  },
-  
-  setDrawType: function(value) {
-    this.activeLayer.setDrawType(value);
   }
-  
+
 };
 
 module.exports = App;

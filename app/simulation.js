@@ -153,9 +153,7 @@ class Simulation {
       if (this.current && this.previous) {
         throw("simulation already initialized");
       }
-    
-      console.log("Configuring " + (!this.current ? "current" : "efe") + " simulation_buffer");
-    
+
       var state = {
         frame_buffer: gl.createFramebuffer(),
         aux_frame_buffers: [],
@@ -175,8 +173,7 @@ class Simulation {
 
         gl.bindTexture(gl.TEXTURE_2D, null);
         src_buffer = null;
-        
-        console.log("Created Texture " + tx_idx);
+
         state.textures[tx_idx] = (tx);
       }
     
@@ -185,15 +182,12 @@ class Simulation {
       for (var color_attachment_idx = 0; color_attachment_idx < this.dataBufferCount(); color_attachment_idx++) {
         color_attachments[color_attachment_idx] = (draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + color_attachment_idx); // gl_FragData[color_attachment_idx]
       }
-    
+
       this.color_attachments = color_attachments;
-      
-      console.log("color_attachments: ", color_attachments);
 
       for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
         var tx = state.textures[tx_idx];
         gl.framebufferTexture2D(gl.FRAMEBUFFER, color_attachments[tx_idx], gl.TEXTURE_2D, tx, 0);
-        console.log("framebufferTexture2D for color_attachment", color_attachments[tx_idx], ", tx: ", tx);
       }
       
       // attach textures to gl_FragData[] outputs

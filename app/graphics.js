@@ -12,7 +12,6 @@ var Graphics = {
 
   initShaders: function(gl, shaders) {
     for (var shaderName in shaders) {
-      console.log(shaderName);
       initShader(gl, shaderName, shaders);
     }
   },
@@ -68,7 +67,6 @@ function initShader(gl, shaderName, shaders)
   
   for (var uniformName of uniforms) {
     var glLoc = gl.getUniformLocation(shader.program, uniformName);
-    console.log(`${shaderName}: uniform ${uniformName} - ${glLoc}`)
     if (glLoc) {
       shader.uniforms[uniformName] = glLoc;
     }
@@ -77,7 +75,6 @@ function initShader(gl, shaderName, shaders)
   for (var i = 0; i < shaders.simulator.dataBufferCount; i++) {
     var uniformName = `uTexture${i}`;
     var glLoc = gl.getUniformLocation(shader.program, uniformName);
-    console.log(`${shaderName}: uniform ${uniformName} - ${glLoc}`)
     if (glLoc) {
       shader.uniforms[uniformName] = glLoc;
     }
@@ -86,15 +83,12 @@ function initShader(gl, shaderName, shaders)
   // get attribute and uniform locations
   for (var attributeName in shader.attributes) {
     shader.attributes[attributeName].location = gl.getAttribLocation(shader.program, attributeName);
-    console.log("attribute: ", attributeName, ", location: ", shader.attributes[attributeName].location);
   }
   for (var uniformName in shader.uniforms) {
     shader.uniforms[uniformName].location = gl.getUniformLocation(shader.program, uniformName);
-    console.log("uniform: ", uniformName, ", location: ", shader.uniforms[uniformName].location);
   }
   for (var uniformName in shader.params) {
     shader.params[uniformName].location = gl.getUniformLocation(shader.program, uniformName);
-    console.log("param: ", uniformName, ", location: ", shader.params[uniformName].location);
   }
 }
 

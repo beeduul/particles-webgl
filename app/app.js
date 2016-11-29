@@ -3,6 +3,7 @@
 let GLUtil = require('gl_util');
 let Graphics = require('graphics');
 let Layer = require('layer');
+let Palette = require('palette');
 
 var FPSLimit = 30;
 
@@ -78,6 +79,10 @@ var App = {
     
     this.layers = [];
     this.addLayer();
+    this.presets = {
+      preset1: (new Palette(this.getPaletteParams(), true)),
+      preset2: (new Palette(this.getPaletteParams(), true))
+    };
 
     canvas.addEventListener("mousedown", function(event) {
       this.handleMouseEvent(event);
@@ -204,6 +209,17 @@ var App = {
 
   setPaletteValue: function(name, value) {
     this.getPaletteParam(name).value = value;
+  },
+  
+  getPresetNames: function() {
+    return Object.keys(this.presets);
+  },
+  
+  setPreset: function(presetName) {
+    if (this.presets[presetName]) {
+      this.activeLayer.palette = this.presets[presetName];
+      this.dirty = true;
+    }
   }
 
 };

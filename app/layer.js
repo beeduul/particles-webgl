@@ -27,8 +27,6 @@ class Layer {
 
     this.shaders = shaders; // TODO deep copy
 
-    this.drawType = DrawTypes.LINES;
-
     this.palette = new Palette(palette_params);
     this.simulation = new Simulation(this.shaders.simulator);
 
@@ -39,17 +37,20 @@ class Layer {
     this.uid = getUID();
   }
 
+  get drawType() {
+    return this.palette.drawType;
+  }
+  
+  set drawType(drawType) {
+    this.palette.drawType = drawType;
+  }
+
   getPaletteParam(name) {
     return this.palette.getParam(name);
   }
   
   getPaletteValue(name) {
     return this.palette.getValue(name);
-  }
-  
-  setDrawType(value) {
-    DrawTypes.checkDrawType(value);
-    this.drawType = value;
   }
   
   setRecording(bool) {

@@ -23,7 +23,7 @@ class Checkbox extends React.Component {
 
 class Choices extends React.Component {
   onInput(event) {
-    this.props.layer.setDrawType(event.target.value);
+    this.props.palette.drawType = event.target.value;
   }
   
   render() {
@@ -31,7 +31,7 @@ class Choices extends React.Component {
       DrawTypes.checkDrawType(pair[0]);
       return <option key={pair[0]} value={pair[0]}>{pair[1]}</option>;
     })
-    return <select defaultValue={this.props.layer.drawType} onInput={this.onInput}>{options}</select>;
+    return <select defaultValue={this.props.palette.drawType} onInput={this.onInput}>{options}</select>;
   }
 }
 
@@ -70,6 +70,28 @@ class Slider extends React.Component {
   }
 }
 
+class PalettePresets extends React.Component {
+  onInput(event) {
+    // select preset
+    app.setPreset(event.target.value);
+  }
+
+  render() {
+    let options = this.props.presetNames.map(function(presetName) {
+      return <option key={presetName} value={presetName}>{presetName}</option>;
+    });
+
+    return (
+      <div className='palette-presets'>
+        <select onInput={this.onInput}>
+          <option key='__internal_noop_header__' value=''>Select a Preset</option>
+          { options }
+        </select>
+      </div>
+    );
+  }
+}
+
 class LayerPalette extends React.Component {
   render() {
 
@@ -80,13 +102,13 @@ class LayerPalette extends React.Component {
     let palette = layer.palette;
     
     let sliders = sliderKeys.map(function(sliderKey) {
-      return <Slider palette={palette} paramName={sliderKey} key={`LayerPalette_${layer.uid}_${sliderKey}`} />
+      return <Slider palette={palette} paramName={sliderKey} key={`LayerPalette_${palette.uid}_${sliderKey}`} />
     });
 
     return (
       <div id="palette">
         { sliders }
-        <Choices key={`LayerPalette_${layer.uid}_Choices`} layer={layer} choices={ [
+        <Choices key={`LayerPalette_${palette.uid}_Choices`} palette={palette} choices={ [
           ['LINES',           '\u007c'],
           // ['TRI_FILLED',     '\u25B2'],
           ['TRI_STROKED',    '\u25B3'],
@@ -138,6 +160,7 @@ class UI extends React.Component {
         <div id='layers'>
           { layers }
         </div>
+        <PalettePresets presetNames={app.getPresetNames()}/>
         <LayerPalette layer={app.activeLayer} />
       </div>
     );

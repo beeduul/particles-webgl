@@ -14,7 +14,7 @@ class Checkbox extends React.Component {
   render() {
     return (
       <div className='parameter'>
-        <input type = 'checkbox' onClick={this.handleOnClick} value={this.props.param.value} />
+        <input type = 'checkbox' onClick={ (event) => this.handleOnClick(event) } value={this.props.param.value} />
         <span className='title'>{this.props.param}</span>
       </div>
     );
@@ -31,7 +31,7 @@ class Choices extends React.Component {
       DrawTypes.checkDrawType(pair[0]);
       return <option key={pair[0]} value={pair[0]}>{pair[1]}</option>;
     })
-    return <select defaultValue={this.props.palette.drawType} onInput={this.onInput}>{options}</select>;
+    return <select defaultValue={this.props.palette.drawType} onInput={ (event) => this.onInput(event)}>{options}</select>;
   }
 }
 
@@ -63,7 +63,7 @@ class Slider extends React.Component {
   render() {
     return (
       <div className={'parameter ' + this.props.paramName}>
-        <input className="slider" type="range" defaultValue={this.toSliderValue()} min='0' max='100' onInput={this.handleOnInput}/>
+        <input className="slider" type="range" defaultValue={this.toSliderValue()} min='0' max='100' onInput={ (event) => this.handleOnInput(event) }/>
         <span className='title'>{this.props.paramName}</span>
       </div>
     );
@@ -83,7 +83,7 @@ class PalettePresets extends React.Component {
 
     return (
       <div className='palette-presets'>
-        <select onInput={this.onInput}>
+        <select onInput={ (event) => this.onInput(event) }>
           <option key='__internal_noop_header__' value=''>Select a Preset</option>
           { options }
         </select>
@@ -129,7 +129,7 @@ class SelectLayerButton extends React.Component {
   
   render() {
     const className = "layer " + (this.props.isActive ? " active" : "");
-    return <div className={className} onClick={this.handleClick}>[{this.props.layerIndex + 1}]</div>
+    return <div className={className} onClick={ (event) => this.handleClick(event) }>[{this.props.layerIndex + 1}]</div>
   }
 }
 
@@ -139,7 +139,7 @@ class AddLayerButton extends React.Component {
   }
   
   render() {
-    return <div className='layer' onClick={this.handleClick}>[ + ]</div>;
+    return <div className='layer' onClick={ (event) => this.handleClick(event) }>[ + ]</div>;
   }
 }
 

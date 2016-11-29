@@ -5,13 +5,13 @@ var app = require('app');
 
 let DrawTypes = require('drawtypes');
 
-var Checkbox = React.createClass({
-  handleOnClick: function(event) {
+class Checkbox extends React.Component {
+  handleOnClick(event) {
     var value = event.target.checked ? 1 : 0;
     app.setPaletteValue(this.props.param, value);
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <div className='parameter'>
         <input type = 'checkbox' onClick={this.handleOnClick} value={this.props.param.value} />
@@ -19,48 +19,48 @@ var Checkbox = React.createClass({
       </div>
     );
   }
-});
+}
 
-var Choices = React.createClass({
-  onInput: function(event) {
+class Choices extends React.Component {
+  onInput(event) {
     this.props.layer.setDrawType(event.target.value);
-  },
+  }
   
-  render: function() {
+  render() {
     let options = this.props.choices.map(function(pair) {
       DrawTypes.checkDrawType(pair[0]);
       return <option key={pair[0]} value={pair[0]}>{pair[1]}</option>;
     })
     return <select defaultValue={this.props.layer.drawType} onInput={this.onInput}>{options}</select>;
   }
-});
+}
 
-var Slider = React.createClass({  
-  toSliderValue: function() {
+class Slider extends React.Component {
+  toSliderValue() {
     var param = app.getPaletteParam(this.props.paramName);
     var delta = param.max - param.min;
     var simValue = app.getPaletteValue(this.props.paramName);
     var value = (simValue - param.min) / delta * 100.0;
     return value;
-  },
+  }
 
-  getParamMin: function() {
+  getParamMin() {
     return app.getPaletteParam(this.props.paramName).min
-  },
+  }
 
-  getParamMax: function() {
+  getParamMax() {
     return app.getPaletteParam(this.props.paramName).max
-  },
+  }
 
-  handleOnInput: function(event) {
+  handleOnInput(event) {
     var param = app.getPaletteParam(this.props.paramName);
     var delta = param.max - param.min;
     var value = event.target.value / 100.0 * delta + param.min;
 
     app.setPaletteValue(this.props.paramName, value);
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <div className={'parameter ' + this.props.paramName}>
         <input className="slider" type="range" defaultValue={this.toSliderValue()} min='0' max='100' onInput={this.handleOnInput}/>
@@ -68,10 +68,10 @@ var Slider = React.createClass({
       </div>
     );
   }
-});
+}
 
-var LayerPalette = React.createClass({
-  render: function() {
+class LayerPalette extends React.Component {
+  render() {
 
     const sliderKeys = ['size', 'age', 'flow', 'symmetry', 'pulse', 'spray', 'colorNoise', 'colorHue', 'saturation', 'accel', 'decay'];
 
@@ -98,31 +98,31 @@ var LayerPalette = React.createClass({
       </div>      
     )
   }
-});
+}
 
-var SelectLayerButton = React.createClass({
-  handleClick: function() {
+class SelectLayerButton extends React.Component {
+  handleClick() {
     app.selectLayer(this.props.layerIndex);
-  },
+  }
   
-  render: function() {
+  render() {
     const className = "layer " + (this.props.isActive ? " active" : "");
     return <div className={className} onClick={this.handleClick}>[{this.props.layerIndex + 1}]</div>
   }
-});
+}
 
-var AddLayerButton = React.createClass({
-  handleClick: function() {
+class AddLayerButton extends React.Component {
+  handleClick() {
     app.addLayer();
-  },
+  }
   
-  render: function() {
+  render() {
     return <div className='layer' onClick={this.handleClick}>[ + ]</div>;
   }
-});
+}
 
-var UI = React.createClass({
-  render: function() {
+class UI extends React.Component {
+  render() {
     let app = this.props.app;
     
     let layers = [];
@@ -142,7 +142,7 @@ var UI = React.createClass({
       </div>
     );
   }
-});
+}
 
 var updateUI = function() {
   var ui = document.getElementById("ui");

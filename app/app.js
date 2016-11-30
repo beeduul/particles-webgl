@@ -11,6 +11,7 @@ var App = {
   
   last_time: undefined,
   start_time: undefined,
+  layers: [],
   
   shaders: {
     // example: {
@@ -77,7 +78,6 @@ var App = {
     
     this.onWindowResize();
     
-    this.layers = [];
     this.addLayer();
     this.presets = {
       preset1: (new Palette(this.getPaletteParams(), true)),

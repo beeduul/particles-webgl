@@ -338,8 +338,6 @@ class Simulation {
 
       var spaceAvailable = sim_width - sim_x;
 
-      var base_index = this.num_particles * 4;
-
       for (var i = 0; i < 4; i++) {
         shortBuf[i] = txArr[tx_idx][i];
       }

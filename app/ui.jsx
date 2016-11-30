@@ -155,7 +155,7 @@ class UI extends React.Component {
     }
     layers.push(<AddLayerButton key='AddLayerButton'/>);
     
-    return (
+    let ui = (
       <div>
         <div id='layers'>
           { layers }
@@ -164,6 +164,8 @@ class UI extends React.Component {
         <LayerPalette layer={app.activeLayer} />
       </div>
     );
+    
+    return app.drawing ? null : ui;
   }
 }
 

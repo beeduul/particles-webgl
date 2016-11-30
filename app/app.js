@@ -172,6 +172,13 @@ var App = {
   },
 
   handleMouseEvent: function(event) {
+    if (event.type == "mousedown") {
+      this.drawing = true;
+      this.dirty = true;
+    } else if (event.type == "mouseup") {
+      this.drawing = false;
+      this.dirty = true;
+    }
     this.activeLayer.handlePointerEvent(event);
   },
 

@@ -7,6 +7,7 @@ varying vec3 color3;
 uniform float nowTime;
 uniform float maxLifeTime;
 uniform float deltaTime;
+uniform vec2 canvasSize;
 
 uniform sampler2D uTexture0; // x, y, dx, dy
 uniform sampler2D uTexture1; // accel x, accel y, decay, sz
@@ -22,8 +23,6 @@ void main() {
   vec4 pdata3 = texture2D(uTexture3, aUV);
   vec4 pdata4 = texture2D(uTexture4, aUV);
   vec4 pdata5 = texture2D(uTexture5, aUV);
-
-  vec2 pos = pdata0.xy;
 
   float size = pdata4.x;
   float pulseFreq = pdata4.y;
@@ -57,10 +56,12 @@ void main() {
     color3 = mix(birthCol, deathCol, age_t);
   }
 
-  float sizeModifier = 1.0/200.0;
-  float r = pdata5.x;  
-  float x = pos.x + (aVert.x * cos(r) - aVert.y * sin(r)) * size * sizeModifier;
-  float y = pos.y + (aVert.x * sin(r) + aVert.y * cos(r)) * size * sizeModifier;
+  float r = pdata5.x;
+  
+  vec2 pos = pdata0.xy;
+  
+  float x = pos.x + (aVert.x * cos(r) - aVert.y * sin(r)) * size / canvasSize.x;
+  float y = pos.y + (aVert.x * sin(r) + aVert.y * cos(r)) * size / canvasSize.y;
   float z = (birth - oldest) / maxLifeTime;
   gl_Position = vec4(x, y, z, 1.0);
 

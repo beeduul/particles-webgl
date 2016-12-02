@@ -63,8 +63,8 @@ function initShader(gl, shaderName, shaders)
 
   shader.uniforms = {};
 
-  var uniforms = ['deltaTime', 'nowTime', 'maxLifeTime', 'uResolution'];
-  
+  var uniforms = ['deltaTime', 'nowTime', 'maxLifeTime', 'uResolution', 'canvasSize'];
+
   for (var uniformName of uniforms) {
     var glLoc = gl.getUniformLocation(shader.program, uniformName);
     if (glLoc) {

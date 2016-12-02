@@ -101,6 +101,9 @@ class Layer {
     if (shader.uniforms.deltaTime) {
       gl.uniform1f(shader.uniforms.deltaTime.location, time.deltaTime);
     }
+    if (shader.uniforms.canvasSize) {
+      gl.uniform2f(shader.uniforms.canvasSize.location, this.canvas.width, this.canvas.height);
+    }
 
 
     for (var tx_idx = 0; tx_idx < this.simulation.dataBufferCount(); tx_idx++) {

@@ -8,10 +8,15 @@ function getUID() {
 }
 
 class Palette {
-  constructor(params, randomize) {
-    this.setParams(params);
-
-    this.drawType = DrawTypes.LINES;
+  constructor(source, randomize) {
+    if (source.constructor == Palette) {
+      this.setParams(source.params);
+      this.drawType = source.drawType;
+    } else {
+      // params object
+      this.setParams(source);
+      this.drawType = DrawTypes.LINES;
+    }
 
     if (randomize) {
       for (let name in this.params) {

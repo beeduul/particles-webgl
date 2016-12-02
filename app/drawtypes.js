@@ -10,11 +10,21 @@ class DrawTypes {
   
   static get LINES() { return 'LINES' };
   static get TRI_STROKED() { return 'TRI_STROKED' };
+  static get TRI_FILLED() { return 'TRI_FILLED' };
   static get SQUARE_STROKED() { return 'SQUARE_STROKED' };
+  static get SQUARE_FILLED() { return 'SQUARE_FILLED' };
+  static get CIRCLE_STROKED() { return 'CIRCLE_STROKED' };
   static get CIRCLE_SHADED() { return 'CIRCLE_SHADED' };
   
   static get all() {
-    return [DrawTypes.LINES, DrawTypes.TRI_STROKED, DrawTypes.SQUARE_STROKED, DrawTypes.CIRCLE_SHADED];
+    return [
+      DrawTypes.LINES,
+      DrawTypes.TRI_STROKED,
+      DrawTypes.TRI_FILLED,
+      DrawTypes.SQUARE_STROKED,
+      DrawTypes.SQUARE_FILLED,
+      DrawTypes.CIRCLE_SHADED
+    ];
   }
   
   static chooseRandom() {

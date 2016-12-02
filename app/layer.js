@@ -122,44 +122,33 @@ class Layer {
       );
 
       gl.drawArrays(gl.POINTS, 0, this.simulation.particleUV.count);
-    } else if (this.drawType == DrawTypes.LINES) {
-      gl.enableVertexAttribArray(shader.attributes.aUV.location); // indices into 0, 0, 1, 1, 2, 2
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleLineUV.buffer);
-      gl.vertexAttribPointer(
-        shader.attributes.aUV.location,
-        this.simulation.particleLineUV.numComponents, gl.FLOAT, false, 0, 0
-      );
 
-      gl.enableVertexAttribArray(shader.attributes.aVert.location);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleVerts.buffer);
-      gl.vertexAttribPointer(
-        shader.attributes.aVert.location,
-        this.simulation.particleVerts.numComponents, gl.FLOAT, false, 0, 0
-      );
-
-      // gl.lineWidth(1.0);
-      gl.drawArrays(gl.LINES, 0, this.simulation.particleLineUV.count);
-      gl.disableVertexAttribArray(shader.attributes.aVert.location);
+    } else {
       
-    } else if (this.drawType == DrawTypes.TRI_STROKED) {
-      gl.enableVertexAttribArray(shader.attributes.aUV.location);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleTriUV.buffer);
-      gl.vertexAttribPointer(
-        shader.attributes.aUV.location,
-        this.simulation.particleTriUV.numComponents, gl.FLOAT, false, 0, 0
-      );
-      
-      gl.enableVertexAttribArray(shader.attributes.aVert.location);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleTris.buffer);
-      gl.vertexAttribPointer(
-        shader.attributes.aVert.location,
-        this.simulation.particleTris.numComponents, gl.FLOAT, false, 0, 0
-      );
-      
-      gl.drawArrays(gl.TRIANGLES, 0, this.simulation.particleTriUV.count);
-      gl.disableVertexAttribArray(shader.attributes.aVert.location);
-      
-    } else if (this.drawType == DrawTypes.SQUARE_STROKED) {
+      var vertexBuffer;
+      var glDrawMode;
+      switch(this.drawType) {
+      case DrawTypes.TRI_FILLED:
+        vertexBuffer = this.simulation.triBuffer;
+        glDrawMode = gl.TRIANGLES;
+        break;
+      case DrawTypes.TRI_STROKED:
+        vertexBuffer = this.simulation.triBuffer;
+        glDrawMode = gl.LINE_LOOP;
+        break;
+      case DrawTypes.SQUARE_FILLED:
+        vertexBuffer = this.simulation.quadStripBuffer;
+        glDrawMode = gl.LINE_LOOP;
+        break;
+      case DrawTypes.SQUARE_STROKED:
+        vertexBuffer = this.simulation.quadStripBuffer;
+        glDrawMode = gl.TRIANGLE_FAN;
+        break;
+      default: // DrawTypes.LINES
+        vertexBuffer = this.simulation.lineBuffer;
+        glDrawMode = gl.LINES;
+        break;
+      }
 
       var ext = GLUtil.extensions()['ANGLE_instanced_arrays'];
 
@@ -172,9 +161,9 @@ class Layer {
       );
       ext.vertexAttribDivisorANGLE(shader.attributes.aUV.location, 1);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.quadStripBuffer.buffer);
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer.buffer);
       gl.enableVertexAttribArray(shader.attributes.aVert.location);
-      var qsbNumComponents = this.simulation.quadStripBuffer.numComponents;
+      var qsbNumComponents = vertexBuffer.numComponents;
       gl.vertexAttribPointer(
         shader.attributes.aVert.location,
         qsbNumComponents, gl.FLOAT, false, 0, 0
@@ -182,9 +171,9 @@ class Layer {
 
       var instanceCount = this.simulation.SIMULATION_DIM * this.simulation.SIMULATION_DIM;
       ext.drawArraysInstancedANGLE(
-        gl.TRIANGLE_FAN,
+        glDrawMode,
         0,
-        this.simulation.quadStripBuffer.count,
+        vertexBuffer.count,
         instanceCount
       );
      

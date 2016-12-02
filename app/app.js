@@ -13,6 +13,8 @@ var App = {
   start_time: undefined,
   layers: [],
   
+  globalKeyBlockCount: 0,
+  
   shaders: {
     // example: {
     //   program: undefined, // created in initShaders
@@ -80,21 +82,7 @@ var App = {
     
     this.addLayer();
     this.presets = {
-      preset1: (new Palette(this.getPaletteParams(), true)),
-      preset2: (new Palette(this.getPaletteParams(), true))
     };
-
-    canvas.addEventListener("mousedown", function(event) {
-      this.handleMouseEvent(event);
-    }.bind(this));
-
-    canvas.addEventListener("mousemove", function(event) {
-      this.handleMouseEvent(event);
-    }.bind(this));
-
-    canvas.addEventListener("mouseup", function(event) {
-      this.handleMouseEvent(event);
-    }.bind(this));
 
     (function(self) {
       window.addEventListener(
@@ -108,7 +96,6 @@ var App = {
       });
 
       window.addEventListener('mousewheel', function(event) {
-        console.log(event);
         event.preventDefault();
       });
 
@@ -131,7 +118,6 @@ var App = {
   
   selectLayer(layerIndex) {
     this.activeLayer = this.layers[layerIndex];
-    console.log(`selected ${layerIndex}`, this.activeLayer);
     this.dirty = true;
   },
   
@@ -182,7 +168,16 @@ var App = {
     this.activeLayer.handlePointerEvent(event);
   },
 
+  globalKeyBlock: function() {
+    return this.globalKeyBlockCount > 0;
+  },
+
   handleKeyEvent: function(event) {
+
+    if (this.globalKeyBlock()) {
+      return;
+    }
+
     switch(event.type) {
     case "keydown":
       switch(event.key) {
@@ -218,6 +213,11 @@ var App = {
     this.getPaletteParam(name).value = value;
   },
   
+  randomizePalette: function() {
+    this.activeLayer.palette = new Palette(this.getPaletteParams(), true);
+    this.dirty = true;
+  },
+  
   getPresetNames: function() {
     return Object.keys(this.presets);
   },
@@ -227,6 +227,31 @@ var App = {
       this.activeLayer.palette = this.presets[presetName];
       this.dirty = true;
     }
+  },
+  
+  checkPresetName: function(presetName) {
+    if (!presetName) {
+      return "enter a name for your preset";
+    }
+    
+    if (typeof presetName != 'string') {
+      return `weird preset name error (${typeof presetName})`;
+    }
+    
+    if (presetName.length < 3) {
+      return 'too short';
+    }
+    
+    if (this.presets[presetName]) {
+      return "already exists, choose a unique name";
+    }
+    
+    return null;
+  },
+
+  addPreset: function(presetName) {
+    this.presets[presetName] = new Palette(this.activeLayer.palette);
+    this.dirty = true;
   }
 
 };

@@ -216,7 +216,7 @@ class Layer {
   }
 
   handlePointerEvent(event) {
-    var eventPos = new glMatrix.vec2.fromValues(event.x, event.y);
+    var eventPos = new glMatrix.vec2.fromValues(event.clientX, event.clientY);
 
     if (event.type == "mousedown") {
 

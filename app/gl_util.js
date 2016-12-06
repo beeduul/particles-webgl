@@ -36,8 +36,8 @@ class GLUtil {
     return _extensions;
   }
 
-  static createVertexBuffer(numComponents, count, data) {
-    return new VertexBuffer(_gl, numComponents, count, data);
+  static createVertexBuffer(numComponents, data) {
+    return new VertexBuffer(_gl, numComponents, data);
   }
   
   static initWebGL(canvas) {

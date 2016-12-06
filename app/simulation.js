@@ -25,46 +25,19 @@ function createParticleUV() {
 
 var _fsQuadBuffer;
 
-class Simulation {
-
-  static getFullScreenQuadBuffer() {
-    if (!this._fsQuadBuffer) {
-      this._fsQuadBuffer = GLUtil.createVertexBuffer(3, new Float32Array([
-        -1.0, -1.0,  0.0,
-         1.0,  1.0,  0.0,
-        -1.0,  1.0,  0.0,
-        -1.0, -1.0,  0.0,
-         1.0, -1.0,  0.0,
-         1.0,  1.0,  0.0
-      ]));
-    }
-    
-    return this._fsQuadBuffer;
-  }
-
-  constructor(simulation_shader) {
+class GPUSimulation {
+  constructor(simulation) {
+    this.simulation = simulation;
     this.particleUV = createParticleUV();
-
-    this.simulation_shader = simulation_shader;
-
     this.num_particles = 0;
-    this.params = {};
-
+  
     // initBuffers - for simulation - create textures, create framebuffer, bind textures to framebuffer, setup gl_FragData outputs for simulation shader
     this.previous = this._createState();
     this.current = this._createState();
   }
   
-  getInstanceCount() {
-    return SIMULATION_WIDTH * SIMULATION_HEIGHT;
-  }
-  
-  isInitialized() {
-    return (this.current && this.previous);
-  }
-  
   dataBufferCount() {
-    return this.simulation_shader.dataBufferCount;
+    return this.simulation.dataBufferCount();
   }
   
   _createState() {
@@ -110,7 +83,7 @@ class Simulation {
       color_attachments[color_attachment_idx] = (draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + color_attachment_idx); // gl_FragData[color_attachment_idx]
     }
 
-    this.color_attachments = color_attachments;
+    state.color_attachments = color_attachments;
 
     for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
       var tx = state.textures[tx_idx];
@@ -118,7 +91,7 @@ class Simulation {
     }
     
     // attach textures to gl_FragData[] outputs
-    draw_buffers_ext.drawBuffersWEBGL(this.color_attachments);
+    draw_buffers_ext.drawBuffersWEBGL(state.color_attachments);
     
     if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
       console.error("Can't use main framebuffer.");
@@ -146,16 +119,15 @@ class Simulation {
     
     return state;
   }
-  
-  simulate(time) {
-    
+
+  simulate(time, shader) {
     var gl = GLUtil.gl();
 
     // write the output of the simulation to the current framebuffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.current.frame_buffer);
 
     var draw_buffers_ext = GLUtil.extensions().WEBGL_draw_buffers;
-    draw_buffers_ext.drawBuffersWEBGL(this.color_attachments);
+    draw_buffers_ext.drawBuffersWEBGL(this.current.color_attachments);
 
     gl.viewport(0, 0, SIMULATION_WIDTH, SIMULATION_HEIGHT);
 
@@ -165,7 +137,6 @@ class Simulation {
     // make sure no DEPTH_TEST
     gl.disable(gl.DEPTH_TEST);
 
-    var shader = this.simulation_shader;
     gl.useProgram(shader.program);
 
     // send vertex information to GPU
@@ -227,19 +198,11 @@ class Simulation {
     gl.useProgram(null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
-  
+
   swapBuffers() {
-    if (this.isInitialized()) {
-      var temp = this.current;
-      this.current = this.previous;
-      this.previous = temp;
-    } else {
-      console.error("simulation not yet initialized")
-    }
-  }
-  
-  update() {
-    
+    var temp = this.current;
+    this.current = this.previous;
+    this.previous = temp;
   }
 
   setupForDrawing(shader, uniforms) {
@@ -326,6 +289,59 @@ class Simulation {
       this.num_particles = 0;
     }
     
+  }
+  
+}
+
+class Simulation {
+
+  static getFullScreenQuadBuffer() {
+    if (!this._fsQuadBuffer) {
+      this._fsQuadBuffer = GLUtil.createVertexBuffer(3, new Float32Array([
+        -1.0, -1.0,  0.0,
+         1.0,  1.0,  0.0,
+        -1.0,  1.0,  0.0,
+        -1.0, -1.0,  0.0,
+         1.0, -1.0,  0.0,
+         1.0,  1.0,  0.0
+      ]));
+    }
+    
+    return this._fsQuadBuffer;
+  }
+
+  constructor(simulation_shader) {
+    this.simulation_shader = simulation_shader;
+    this.gpuSimulation = new GPUSimulation(this);
+  }
+  
+  getInstanceCount() {
+    return SIMULATION_WIDTH * SIMULATION_HEIGHT;
+  }
+  
+  isInitialized() {
+    return (this.current && this.previous);
+  }
+  
+  dataBufferCount() {
+    return this.simulation_shader.dataBufferCount;
+  }
+  
+  simulate(time) {
+    this.gpuSimulation.simulate(time, this.simulation_shader);
+  }
+
+  swapBuffers() {
+    this.gpuSimulation.swapBuffers();
+  }
+  
+  setupForDrawing(shader, uniforms) {
+    this.gpuSimulation.setupForDrawing(shader, uniforms);
+  }
+
+  loadParticleOntoGPU(txArr) {
+    // check if 
+    this.gpuSimulation.loadParticleOntoGPU(txArr);
   }
 
 }

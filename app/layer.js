@@ -127,6 +127,11 @@ class Layer {
     this.simulation.swapBuffers();
   }
   
+  getShaderForDrawType(drawType) {
+    let shaders = this.shaders;
+    return (drawType == DrawTypes.CIRCLE_SHADED) ? shaders.point_painter : shaders.painter;
+  }
+  
   draw(time) {
 
     var gl = GLUtil.gl();
@@ -138,13 +143,8 @@ class Layer {
 
     // gl.enable(gl.BLEND);
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    
-    var shader;
-    if (this.drawType == DrawTypes.CIRCLE_SHADED) {
-      shader = this.shaders.point_painter;
-    } else {
-      shader = this.shaders.painter;
-    }
+
+    var shader = this.getShaderForDrawType(this.drawType);
     gl.useProgram(shader.program);
 
     let uniforms = {

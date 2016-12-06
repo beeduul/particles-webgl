@@ -47,13 +47,12 @@ class Simulation {
 
     this.simulation_shader = simulation_shader;
 
-    this.current = undefined;
-    this.previous = undefined;
     this.num_particles = 0;
     this.params = {};
 
     // initBuffers - for simulation - create textures, create framebuffer, bind textures to framebuffer, setup gl_FragData outputs for simulation shader
-    this.initBuffers();
+    this.previous = this._createState();
+    this.current = this._createState();
   }
   
   getInstanceCount() {
@@ -68,7 +67,7 @@ class Simulation {
     return this.simulation_shader.dataBufferCount;
   }
   
-  initBuffers() {
+  _createState() {
 
     var gl = GLUtil.gl();
     var draw_buffers_ext = GLUtil.extensions().WEBGL_draw_buffers;
@@ -81,81 +80,71 @@ class Simulation {
     for (var i = 0; i < size; i++) {
       src_buffer[i] = 0;
     }
-    // initialize last and next simulation buffers
-    for (var sim_buffer_idx = 0; sim_buffer_idx < 2; sim_buffer_idx++) {
-      if (this.current && this.previous) {
-        throw("simulation already initialized");
-      }
-
-      var state = {
-        frame_buffer: gl.createFramebuffer(),
-        aux_frame_buffers: [],
-        textures: []
-      }
     
-      for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
-        var tx = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, tx);
-        
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, src_buffer);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    var state = {
+      frame_buffer: gl.createFramebuffer(),
+      aux_frame_buffers: [],
+      textures: []
+    }
+  
+    for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
+      var tx = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tx);
+      
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, src_buffer);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-        gl.bindTexture(gl.TEXTURE_2D, null);
-        src_buffer = null;
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      src_buffer = null;
 
-        state.textures[tx_idx] = (tx);
-      }
+      state.textures[tx_idx] = (tx);
+    }
+  
+    gl.bindFramebuffer(gl.FRAMEBUFFER, state.frame_buffer);
+    var color_attachments = [];
+    for (var color_attachment_idx = 0; color_attachment_idx < this.dataBufferCount(); color_attachment_idx++) {
+      color_attachments[color_attachment_idx] = (draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + color_attachment_idx); // gl_FragData[color_attachment_idx]
+    }
+
+    this.color_attachments = color_attachments;
+
+    for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
+      var tx = state.textures[tx_idx];
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, color_attachments[tx_idx], gl.TEXTURE_2D, tx, 0);
+    }
     
-      gl.bindFramebuffer(gl.FRAMEBUFFER, state.frame_buffer);
-      var color_attachments = [];
-      for (var color_attachment_idx = 0; color_attachment_idx < this.dataBufferCount(); color_attachment_idx++) {
-        color_attachments[color_attachment_idx] = (draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL + color_attachment_idx); // gl_FragData[color_attachment_idx]
-      }
+    // attach textures to gl_FragData[] outputs
+    draw_buffers_ext.drawBuffersWEBGL(this.color_attachments);
+    
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+      console.error("Can't use main framebuffer.");
+      // See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
+    }
+    if (!gl.isFramebuffer(state.frame_buffer)) {
+      console.error("Frame buffer failed");
+    }
+    
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    
+    for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
+      var tx = state.textures[tx_idx];
+      var aux_fb = gl.createFramebuffer();
+      state.aux_frame_buffers[tx_idx] = aux_fb;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL, gl.TEXTURE_2D, tx, 0);
 
-      this.color_attachments = color_attachments;
-
-      for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
-        var tx = state.textures[tx_idx];
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, color_attachments[tx_idx], gl.TEXTURE_2D, tx, 0);
-      }
-      
-      // attach textures to gl_FragData[] outputs
-      draw_buffers_ext.drawBuffersWEBGL(this.color_attachments);
-      
       if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-        console.error("Can't use main framebuffer.");
+        console.error("Can't use aux_fb " + tx_idx);
         // See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
       }
-      if (!gl.isFramebuffer(state.frame_buffer)) {
-        console.error("Frame buffer failed");
-      }
-      
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      
-      for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
-        var tx = state.textures[tx_idx];
-        var aux_fb = gl.createFramebuffer();
-        state.aux_frame_buffers[tx_idx] = aux_fb;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, aux_fb);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, draw_buffers_ext.COLOR_ATTACHMENT0_WEBGL, gl.TEXTURE_2D, tx, 0);
-
-        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-          console.error("Can't use aux_fb " + tx_idx);
-          // See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
-        }
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      }
-
-      if (this.current) {
-        this.previous = state;
-      } else {
-        this.current = state;
-      } 
     }
+    
+    return state;
   }
   
   simulate(time) {

@@ -242,8 +242,21 @@ class Simulation {
     
   }
 
-  setupForDrawing(shader) {
+  setupForDrawing(shader, uniforms) {
     let gl = GLUtil.gl();
+
+    let uniformNames = Object.keys(uniforms);
+    for (let uniformName of uniformNames) {
+      let uniformValue = uniforms[uniformName];
+      if (shader.uniforms[uniformName]) {
+        let length = uniformValue.constructor == Array ? uniformValue.length : 1;
+        if (length == 1) {
+          gl.uniform1f(shader.uniforms[uniformName].location, uniformValue);
+        } else {
+          gl[`uniform${length}f`](shader.uniforms[uniformName].location, ...uniformValue);
+        }
+      }
+    };
 
     for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
       let uniform = shader.uniforms["uTexture" + tx_idx];

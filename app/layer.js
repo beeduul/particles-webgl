@@ -147,21 +147,14 @@ class Layer {
     }
     gl.useProgram(shader.program);
 
-    if (shader.uniforms.nowTime) {
-      gl.uniform1f(shader.uniforms.nowTime.location, time.nowTime);
-    }
-    if (shader.uniforms.maxLifeTime) {
-      var maxLifeTime = this.getPaletteParam('age').max;
-      gl.uniform1f(shader.uniforms.maxLifeTime.location, maxLifeTime);
-    }
-    if (shader.uniforms.deltaTime) {
-      gl.uniform1f(shader.uniforms.deltaTime.location, time.deltaTime);
-    }
-    if (shader.uniforms.canvasSize) {
-      gl.uniform2f(shader.uniforms.canvasSize.location, this.canvas.width, this.canvas.height);
+    let uniforms = {
+      nowTime: time.nowTime,
+      maxLifeTime: this.getPaletteParam('age').max,
+      deltaTime: time.deltaTime,
+      canvasSize: [this.canvas.width, this.canvas.height]
     }
 
-    this.simulation.setupForDrawing(shader);
+    this.simulation.setupForDrawing(shader, uniforms);
 
     if (this.drawType == DrawTypes.CIRCLE_SHADED) {
 

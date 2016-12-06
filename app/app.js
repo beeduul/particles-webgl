@@ -54,7 +54,7 @@ var App = {
   getPaletteParams: function() {
     var hue = Math.random() * 360;
     return {
-      symmetry:         { default: 4,     min: 1,     max: 16    },
+      symmetry:         { default: 1,     min: 1,     max: 16    },
       colorHue:         { default: hue,   min: 0,     max: 360   }, // hue is in degress
       saturation:       { default: 1,     min: 0,     max: 1.0   }, // saturation is 0 .. 1
       colorNoise:       { default: 0.1,   min: 0,     max: 1     },
@@ -62,7 +62,7 @@ var App = {
       size:             { default: 25.0,  min: 1,     max: 100   },
       age:              { default: 2500,  min: 500,   max: 30000 }, // ms
       pulse:            { default: 0,     min: 0,     max: 2.0   },  // pulses per second
-      flow:             { default: 50,    min: 10,    max: 250   },  // particles per second
+      flow:             { default: 125,   min: 10,    max: 250   },  // particles per second
       accel:            { default: 0,     min: -10,   max: 10    },
       decay:            { default: 0.999, min: 0.95,  max: 1     }
     };

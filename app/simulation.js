@@ -242,6 +242,27 @@ class Simulation {
     
   }
 
+  setupForDrawing(shader) {
+    let gl = GLUtil.gl();
+
+    for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
+      let uniform = shader.uniforms["uTexture" + tx_idx];
+
+      if (uniform) {
+        gl.activeTexture(gl.TEXTURE0 + tx_idx);
+        gl.bindTexture(gl.TEXTURE_2D, this.previous.textures[tx_idx]);
+        gl.uniform1i(uniform.location, tx_idx);
+      }
+    }
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.particleUV.buffer);
+    gl.enableVertexAttribArray(shader.attributes.aUV.location);
+    gl.vertexAttribPointer(
+      shader.attributes.aUV.location,
+      this.particleUV.numComponents, gl.FLOAT, false, 0, 0
+    );
+  }
+
   loadParticleOntoGPU(txArr) {
     const shortBuf = new Float32Array(4 * 4);
     var gl = GLUtil.gl();

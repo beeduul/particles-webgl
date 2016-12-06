@@ -161,26 +161,11 @@ class Layer {
       gl.uniform2f(shader.uniforms.canvasSize.location, this.canvas.width, this.canvas.height);
     }
 
-
-    for (var tx_idx = 0; tx_idx < this.simulation.dataBufferCount(); tx_idx++) {
-      var uniform = shader.uniforms["uTexture" + tx_idx];
-      if (uniform) {
-        gl.activeTexture(gl.TEXTURE0 + tx_idx);
-        gl.bindTexture(gl.TEXTURE_2D, this.simulation.previous.textures[tx_idx]);
-        gl.uniform1i(uniform.location, tx_idx);
-      }
-    }
+    this.simulation.setupForDrawing(shader);
 
     if (this.drawType == DrawTypes.CIRCLE_SHADED) {
-      // bind the particleUV vertex buffer to GPU
-      gl.enableVertexAttribArray(shader.attributes.aUV.location);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleUV.buffer);
-      gl.vertexAttribPointer(
-        shader.attributes.aUV.location,
-        this.simulation.particleUV.numComponents, gl.FLOAT, false, 0, 0
-      );
 
-      gl.drawArrays(gl.POINTS, 0, this.simulation.particleUV.count);
+      gl.drawArrays(gl.POINTS, 0, this.simulation.getInstanceCount());
 
     } else {
       
@@ -219,13 +204,6 @@ class Layer {
 
       var ext = GLUtil.extensions()['ANGLE_instanced_arrays'];
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.simulation.particleUV.buffer);
-      gl.enableVertexAttribArray(shader.attributes.aUV.location);
-      var pUVNumComponents = this.simulation.particleUV.numComponents;
-      gl.vertexAttribPointer(
-        shader.attributes.aUV.location,
-        pUVNumComponents, gl.FLOAT, false, 0, 0
-      );
       ext.vertexAttribDivisorANGLE(shader.attributes.aUV.location, 1);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer.buffer);

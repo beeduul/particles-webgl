@@ -2,12 +2,12 @@
 
 let GLUtil = require('gl_util');
 
-const SIMULATION_DIM = 256;
-
+const SIMULATION_WIDTH = 16384; // largest texture supported by chrome, 256 * 64; TODO
+const SIMULATION_HEIGHT = 1;
 
 function createParticleUV() {
-  const width = SIMULATION_DIM;
-  const height = SIMULATION_DIM;
+  const width = SIMULATION_WIDTH;
+  const height = SIMULATION_HEIGHT;
 
   var buffer = [];
   for (var y=0; y<height; ++y) {
@@ -52,10 +52,12 @@ class Simulation {
     this.num_particles = 0;
     this.params = {};
 
-    this.SIMULATION_DIM = SIMULATION_DIM;
-    
     // initBuffers - for simulation - create textures, create framebuffer, bind textures to framebuffer, setup gl_FragData outputs for simulation shader
     this.initBuffers();
+  }
+  
+  getInstanceCount() {
+    return SIMULATION_WIDTH * SIMULATION_HEIGHT;
   }
   
   isInitialized() {
@@ -71,7 +73,8 @@ class Simulation {
     var gl = GLUtil.gl();
     var draw_buffers_ext = GLUtil.extensions().WEBGL_draw_buffers;
     
-    var w, h; w = h = SIMULATION_DIM;
+    let w = SIMULATION_WIDTH;
+    let h = SIMULATION_HEIGHT;
 
     var size = w * h * 4;
     var src_buffer = new Float32Array(size);
@@ -165,7 +168,7 @@ class Simulation {
     var draw_buffers_ext = GLUtil.extensions().WEBGL_draw_buffers;
     draw_buffers_ext.drawBuffersWEBGL(this.color_attachments);
 
-    gl.viewport(0, 0, SIMULATION_DIM, SIMULATION_DIM);
+    gl.viewport(0, 0, SIMULATION_WIDTH, SIMULATION_HEIGHT);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.blendFunc(gl.ONE, gl.ZERO);  // so alpha output color draws correctly
@@ -199,8 +202,8 @@ class Simulation {
     gl.uniform1f(shader.uniforms.nowTime.location, time.nowTime);
     gl.uniform1f(shader.uniforms.deltaTime.location, time.deltaTime);
     gl.uniform2f(shader.uniforms.uResolution.location,
-      SIMULATION_DIM, // width
-      SIMULATION_DIM  // height
+      SIMULATION_WIDTH,
+      SIMULATION_HEIGHT
     );
 
     if (shader.params) {
@@ -254,8 +257,8 @@ class Simulation {
     const shortBuf = new Float32Array(4 * 4);
     var gl = GLUtil.gl();
 
-    const sim_width = SIMULATION_DIM;
-    const sim_height = SIMULATION_DIM;
+    const sim_width = SIMULATION_WIDTH;
+    const sim_height = SIMULATION_HEIGHT;
       
     for (var tx_idx = 0; tx_idx < this.dataBufferCount(); tx_idx++) {
       var tx = this.previous.textures[tx_idx];
@@ -265,7 +268,7 @@ class Simulation {
 
       var sim_x = this.num_particles % sim_width;
       var sim_y = Math.floor(this.num_particles / sim_width);
-      if (sim_x == 0 && sim_y == SIMULATION_DIM) {
+      if (sim_x == 0 && sim_y == SIMULATION_HEIGHT) {
         sim_y = 0;
       }
 

@@ -237,12 +237,11 @@ class Layer {
         qsbNumComponents, gl.FLOAT, false, 0, 0
       );
 
-      var instanceCount = this.simulation.SIMULATION_DIM * this.simulation.SIMULATION_DIM;
       ext.drawArraysInstancedANGLE(
         glDrawMode,
         0,
         vertexBuffer.count,
-        instanceCount
+        this.simulation.getInstanceCount()
       );
      
       ext.vertexAttribDivisorANGLE(shader.attributes.aUV.location, 0);

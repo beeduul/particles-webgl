@@ -189,7 +189,8 @@ class Layer {
         vertexBuffer = Layer.getHexStripBuffer();
         glDrawMode = gl.TRIANGLE_FAN;
         break;
-      default: // DrawTypes.LINES
+      case DrawTypes.LINES:
+      default:
         vertexBuffer = Layer.getLineBuffer();
         glDrawMode = gl.LINES;
         break;

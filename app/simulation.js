@@ -43,8 +43,6 @@ class Simulation {
   }
 
   constructor(simulation_shader) {
-    this.gl = GLUtil.gl();
-
     this.particleUV = createParticleUV();
 
     this.simulation_shader = simulation_shader;
@@ -70,7 +68,7 @@ class Simulation {
   
   initBuffers() {
 
-    var gl = this.gl;
+    var gl = GLUtil.gl();
     var draw_buffers_ext = GLUtil.extensions().WEBGL_draw_buffers;
     
     var w, h; w = h = SIMULATION_DIM;
@@ -159,7 +157,7 @@ class Simulation {
   
   simulate(time) {
     
-    var gl = this.gl;
+    var gl = GLUtil.gl();
 
     // write the output of the simulation to the current framebuffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.current.frame_buffer);
@@ -254,7 +252,7 @@ class Simulation {
 
   loadParticleOntoGPU(txArr) {
     const shortBuf = new Float32Array(4 * 4);
-    var gl = this.gl;
+    var gl = GLUtil.gl();
 
     const sim_width = SIMULATION_DIM;
     const sim_height = SIMULATION_DIM;

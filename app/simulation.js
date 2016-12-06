@@ -4,19 +4,6 @@ let GLUtil = require('gl_util');
 
 const SIMULATION_DIM = 256;
 
-function createFullScreenQuadVertexBuffer() {
-  const numComponents = 3;
-  const data = new Float32Array([
-   -1.0, -1.0,  0.0,
-    1.0,  1.0,  0.0,
-   -1.0,  1.0,  0.0,
-   -1.0, -1.0,  0.0,
-    1.0, -1.0,  0.0,
-    1.0,  1.0,  0.0,
-  ]);
-  
-  return GLUtil.createVertexBuffer(numComponents, data);
-}
 
 function createParticleUV() {
   const width = SIMULATION_DIM;
@@ -36,13 +23,27 @@ function createParticleUV() {
   return GLUtil.createVertexBuffer(numComponents, data);
 }
 
+var _fsQuadBuffer;
 
 class Simulation {
 
+  static getFullScreenQuadBuffer() {
+    if (!this._fsQuadBuffer) {
+      this._fsQuadBuffer = GLUtil.createVertexBuffer(3, new Float32Array([
+        -1.0, -1.0,  0.0,
+         1.0,  1.0,  0.0,
+        -1.0,  1.0,  0.0,
+        -1.0, -1.0,  0.0,
+         1.0, -1.0,  0.0,
+         1.0,  1.0,  0.0
+      ]));
+    }
+    
+    return this._fsQuadBuffer;
+  }
+
   constructor(simulation_shader) {
     this.gl = GLUtil.gl();
-
-    this.fullScreenQuadPos = createFullScreenQuadVertexBuffer();
 
     this.particleUV = createParticleUV();
 
@@ -178,11 +179,14 @@ class Simulation {
     gl.useProgram(shader.program);
 
     // send vertex information to GPU
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.fullScreenQuadPos.buffer);
+    
+    let fsQuadBuffer = Simulation.getFullScreenQuadBuffer();
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, fsQuadBuffer.buffer);
     gl.enableVertexAttribArray(shader.attributes.aPosition.location);
     gl.vertexAttribPointer(
       shader.attributes.aPosition.location, // index of target attribute in the buffer bound to gl.ARRAY_BUFFER
-      this.fullScreenQuadPos.numComponents, // number of components per attribute
+      fsQuadBuffer.numComponents, // number of components per attribute
       gl.FLOAT, false, 0, 0);  // type, normalized, stride, offset
 
     // update shader uniforms
@@ -226,7 +230,7 @@ class Simulation {
     }
         
     // 'draw' the simulation
-    gl.drawArrays(gl.TRIANGLES, 0, this.fullScreenQuadPos.count);
+    gl.drawArrays(gl.TRIANGLES, 0, fsQuadBuffer.count);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.disableVertexAttribArray(shader.attributes.aPosition.location);

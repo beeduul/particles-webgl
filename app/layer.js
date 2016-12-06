@@ -202,10 +202,10 @@ class Layer {
 
       gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer.buffer);
       gl.enableVertexAttribArray(shader.attributes.aVert.location);
-      var qsbNumComponents = vertexBuffer.numComponents;
       gl.vertexAttribPointer(
         shader.attributes.aVert.location,
-        qsbNumComponents, gl.FLOAT, false, 0, 0
+        vertexBuffer.numComponents,
+        gl.FLOAT, false, 0, 0
       );
 
       ext.drawArraysInstancedANGLE(

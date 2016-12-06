@@ -2,7 +2,6 @@
 
 let GLUtil = require('gl_util');
 var glMatrix = require('gl-matrix');
-let Color = require('color');
 
 let Palette = require('palette');
 let Simulation = require('simulation');
@@ -261,22 +260,12 @@ class Layer {
   
   // pointer event handling
 
-  getCurrentColor() {
-    // this.setPaletteValue('colorHue', Math.random() * 360);
-    let s = this.getPaletteValue('saturation');
-    let hsv = Color.createHSV( {
-      h: this.getPaletteValue('colorHue'),
-      s: s
-    } );
-    return Color.hsvToRgb(hsv);
-  }
-
   handlePointerEvent(event) {
     var eventPos = new glMatrix.vec2.fromValues(event.clientX, event.clientY);
 
     if (event.type == "mousedown") {
 
-      this.rgb = this.getCurrentColor();
+      this.rgb = this.palette.getCurrentColor();
       
       this.vcr.recordEvent(eventPos, this.rgb);
     

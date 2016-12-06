@@ -1,6 +1,7 @@
 "use strict";
 
 let DrawTypes = require('drawtypes');
+let Color = require('color');
 
 let uid = 0;
 function getUID() {
@@ -51,6 +52,16 @@ class Palette {
   getValue(name) {
     var param = this.getParam(name);
     return param.hasOwnProperty('value') ? param.value : param.default;
+  }
+
+  getCurrentColor() {
+    // this.setPaletteValue('colorHue', Math.random() * 360);
+    let s = this.getValue('saturation');
+    let hsv = Color.createHSV( {
+      h: this.getValue('colorHue'),
+      s: s
+    } );
+    return Color.hsvToRgb(hsv);
   }
 
 }

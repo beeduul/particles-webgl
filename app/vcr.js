@@ -26,8 +26,7 @@ class VCR {
 
       var endTime = this._nowTime + time.deltaTime;
       while(event.ts < endTime) {
-        var color = event.rgb;
-        var color = layer.getCurrentColor();
+        var color = layer.palette.getCurrentColor();
         layer.addParticlesAt(event.pos, color, time);
 
         this._head++;

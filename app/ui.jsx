@@ -167,11 +167,12 @@ class LayerPalette extends React.Component {
         { sliders }
         <Choices key={`LayerPalette_${palette.uid}_Choices`} palette={palette} choices={ [
           ['LINES',           '\u007c'],
-          ['TRI_FILLED',     '\u25B2'],
-          ['TRI_STROKED',    '\u25B3'],
-          ['CIRCLE_SHADED',  '\u25CF'],
+          ['TRI_FILLED',      '\u25B2'],
+          ['TRI_STROKED',     '\u25B3'],
           ['SQUARE_FILLED',   '\u25A0'],
           ['SQUARE_STROKED',  '\u25A1'],
+          ['HEX_STROKED',     'hex'],
+          ['CIRCLE_SHADED',   '\u25CF'],
           // ['CIRCLE_STROKED', '\u25CB']
         ] } />
       </div>      

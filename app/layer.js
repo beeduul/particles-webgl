@@ -147,6 +147,14 @@ class Layer {
         vertexBuffer = this.simulation.quadStripBuffer;
         glDrawMode = gl.LINE_LOOP;
         break;
+      case DrawTypes.HEX_STROKED:
+        vertexBuffer = this.simulation.hexStripBuffer;
+        glDrawMode = gl.LINE_LOOP;
+        break;
+      case DrawTypes.HEX_FILLED:
+        vertexBuffer = this.simulation.hexStripBuffer;
+        glDrawMode = gl.TRIANGLE_FAN;
+        break;
       default: // DrawTypes.LINES
         vertexBuffer = this.simulation.lineBuffer;
         glDrawMode = gl.LINES;

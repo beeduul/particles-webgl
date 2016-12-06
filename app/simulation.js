@@ -63,9 +63,15 @@ class Simulation {
     ]));
 
     this.particleUV = createParticleUV();
+    this.hexStripBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
+      1, 0,
+      0.5, -4/5,
+      -0.5, -4/5,
+      -1, 0,
+      -0.5, 4/5,
+      0.5, 4/5
+    ]));
 
-    // this.particleHexes = createShapeVertices([1, 0,  0.5, -4/5,  -0.5, -4/5,  -1, 0,  -0.5, 4/5,  0.5, 4/5]);
-    // this.particleHexUV = createParticlePointUVs(6);
 
     this.simulation_shader = simulation_shader;
 

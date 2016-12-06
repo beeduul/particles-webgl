@@ -13,6 +13,8 @@ class DrawTypes {
   static get TRI_FILLED() { return 'TRI_FILLED' };
   static get SQUARE_STROKED() { return 'SQUARE_STROKED' };
   static get SQUARE_FILLED() { return 'SQUARE_FILLED' };
+  static get HEX_STROKED() { return 'HEX_STROKED' };
+  static get HEX_FILLED() { return 'HEX_FILLED' };
   static get CIRCLE_STROKED() { return 'CIRCLE_STROKED' };
   static get CIRCLE_SHADED() { return 'CIRCLE_SHADED' };
   
@@ -23,6 +25,8 @@ class DrawTypes {
       DrawTypes.TRI_FILLED,
       DrawTypes.SQUARE_STROKED,
       DrawTypes.SQUARE_FILLED,
+      DrawTypes.HEX_STROKED,
+      DrawTypes.HEX_FILLED,
       DrawTypes.CIRCLE_SHADED
     ];
   }
@@ -38,4 +42,4 @@ class DrawTypes {
   }
 }
 
-module.exports = DrawTypes; // Enum('CIRCLE_SHADED', 'LINES', 'TRI_STROKED', 'SQUARE_STROKED');
+module.exports = DrawTypes;

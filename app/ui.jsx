@@ -169,9 +169,9 @@ class LayerPalette extends React.Component {
           ['LINES',           '\u007c'],
           ['TRI_FILLED',     '\u25B2'],
           ['TRI_STROKED',    '\u25B3'],
-          ['SQUARE_FILLED', '\u25A1'],
-          ['SQUARE_STROKED',  '\u25A0'],
           ['CIRCLE_SHADED',  '\u25CF'],
+          ['SQUARE_FILLED',   '\u25A0'],
+          ['SQUARE_STROKED',  '\u25A1'],
           // ['CIRCLE_STROKED', '\u25CB']
         ] } />
       </div>      

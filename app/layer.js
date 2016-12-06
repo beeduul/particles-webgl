@@ -141,11 +141,11 @@ class Layer {
         break;
       case DrawTypes.SQUARE_FILLED:
         vertexBuffer = this.simulation.quadStripBuffer;
-        glDrawMode = gl.LINE_LOOP;
+        glDrawMode = gl.TRIANGLE_FAN;
         break;
       case DrawTypes.SQUARE_STROKED:
         vertexBuffer = this.simulation.quadStripBuffer;
-        glDrawMode = gl.TRIANGLE_FAN;
+        glDrawMode = gl.LINE_LOOP;
         break;
       default: // DrawTypes.LINES
         vertexBuffer = this.simulation.lineBuffer;

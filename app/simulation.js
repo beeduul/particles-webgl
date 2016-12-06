@@ -38,40 +38,13 @@ function createParticleUV() {
 
 
 class Simulation {
-  
+
   constructor(simulation_shader) {
     this.gl = GLUtil.gl();
 
     this.fullScreenQuadPos = createFullScreenQuadVertexBuffer();
 
-    this.lineBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
-      -1, 0,
-      1,  1
-    ]));
-
-    this.triBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
-         0,  1/2,
-       3/5, -1/2,
-      -3/5, -1/2
-    ]));
-
-    this.quadStripBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
-      -1.0, -1.0,
-      -1.0,  1.0,
-       1.0,  1.0,
-       1.0, -1.0
-    ]));
-
     this.particleUV = createParticleUV();
-    this.hexStripBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
-      1, 0,
-      0.5, -4/5,
-      -0.5, -4/5,
-      -1, 0,
-      -0.5, 4/5,
-      0.5, 4/5
-    ]));
-
 
     this.simulation_shader = simulation_shader;
 

@@ -19,7 +19,64 @@ function getUID() {
 
 let DrawTypes = require('drawtypes');
 
+var _lineBuffer;
+var _triBuffer;
+var _quadStripBuffer;
+var _hexStripBuffer;
+
 class Layer {
+
+  static getLineBuffer() {
+    if (!_lineBuffer) {
+      _lineBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
+        -1, 0,
+        1,  1
+      ]));
+    } 
+    
+    return _lineBuffer;
+  }
+
+  static getTriBuffer() {
+    if (!_triBuffer) {
+      _triBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
+           0,  1/2,
+         3/5, -1/2,
+        -3/5, -1/2
+      ]));
+    }
+    
+    return _triBuffer;
+  }
+
+  static getQuadStripBuffer() {
+    if (!_quadStripBuffer) {
+      _quadStripBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
+        -1.0, -1.0,
+        -1.0,  1.0,
+         1.0,  1.0,
+         1.0, -1.0
+      ]));
+    }
+    
+    return _quadStripBuffer;
+  }
+
+  static getHexStripBuffer() {
+    if (!_hexStripBuffer) {
+      _hexStripBuffer = GLUtil.createVertexBuffer(2, new Float32Array([
+        1, 0,
+        0.5, -4/5,
+        -0.5, -4/5,
+        -1, 0,
+        -0.5, 4/5,
+        0.5, 4/5
+      ]));
+    }
+
+    return _hexStripBuffer;
+  }
+
   constructor(palette_params, shaders) {
 
     this.lastLoc = null;
@@ -132,31 +189,31 @@ class Layer {
       var glDrawMode;
       switch(this.drawType) {
       case DrawTypes.TRI_FILLED:
-        vertexBuffer = this.simulation.triBuffer;
+        vertexBuffer = Layer.getTriBuffer();
         glDrawMode = gl.TRIANGLES;
         break;
       case DrawTypes.TRI_STROKED:
-        vertexBuffer = this.simulation.triBuffer;
+        vertexBuffer = Layer.getTriBuffer();
         glDrawMode = gl.LINE_LOOP;
         break;
       case DrawTypes.SQUARE_FILLED:
-        vertexBuffer = this.simulation.quadStripBuffer;
+        vertexBuffer = Layer.getQuadStripBuffer();
         glDrawMode = gl.TRIANGLE_FAN;
         break;
       case DrawTypes.SQUARE_STROKED:
-        vertexBuffer = this.simulation.quadStripBuffer;
+        vertexBuffer = Layer.getQuadStripBuffer();
         glDrawMode = gl.LINE_LOOP;
         break;
       case DrawTypes.HEX_STROKED:
-        vertexBuffer = this.simulation.hexStripBuffer;
+        vertexBuffer = Layer.getHexStripBuffer();
         glDrawMode = gl.LINE_LOOP;
         break;
       case DrawTypes.HEX_FILLED:
-        vertexBuffer = this.simulation.hexStripBuffer;
+        vertexBuffer = Layer.getHexStripBuffer();
         glDrawMode = gl.TRIANGLE_FAN;
         break;
       default: // DrawTypes.LINES
-        vertexBuffer = this.simulation.lineBuffer;
+        vertexBuffer = Layer.getLineBuffer();
         glDrawMode = gl.LINES;
         break;
       }

@@ -312,11 +312,14 @@ class Layer {
         glMatrix.vec2.scale(dragVector_t, dragVector, t);
 
         // px, py, dx, dy
-        var spray = this.getPaletteValue('spray');
         var thisPart = glMatrix.vec2.create();
         glMatrix.vec2.add(thisPart, symP, dragVector_t);
-        thisPart[0] = (thisPart[0] / this.canvas.width) * 2.0 - 1.0 + (2 * Math.random() - 1) * spray;
-        thisPart[1] = (thisPart[1] / this.canvas.height) * -2.0 + 1.0 + (2 * Math.random() - 1) * spray;
+
+        var spray = this.getPaletteValue('spray');
+        var angleOffset = Math.random() * Math.PI * 2.0;
+        var distanceFromCenter = Math.random();
+        thisPart[0] = (thisPart[0] / this.canvas.width) * 2.0 - 1.0 + Math.cos(angleOffset) * spray * distanceFromCenter;
+        thisPart[1] = (thisPart[1] / this.canvas.height) * -2.0 + 1.0 + Math.sin(angleOffset) * spray * distanceFromCenter;
         
         var dx = 0;
         var dy = 0;

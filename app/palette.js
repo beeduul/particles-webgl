@@ -16,7 +16,7 @@ class Palette {
     } else {
       // params object
       this.setParams(source);
-      this.drawType = DrawTypes.LINES;
+      this.drawType = DrawTypes.SQUARE_FILLED;
     }
 
     if (randomize) {
@@ -28,6 +28,8 @@ class Palette {
       
       this.drawType = DrawTypes.chooseRandom();
     }
+
+    this.randomizeColor();
 
     this.uid = getUID();
   }
@@ -54,11 +56,15 @@ class Palette {
     return param.hasOwnProperty('value') ? param.value : param.default;
   }
 
+  randomizeColor() {
+    this.hue = Math.random() * 360;
+  }
+
   getCurrentColor() {
     // this.setPaletteValue('colorHue', Math.random() * 360);
     let s = this.getValue('saturation');
     let hsv = Color.createHSV( {
-      h: this.getValue('colorHue'),
+      h: this.hue, // this.getValue('colorHue'),
       s: s
     } );
     return Color.hsvToRgb(hsv);

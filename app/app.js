@@ -55,7 +55,7 @@ var App = {
     var hue = Math.random() * 360;
     return {
       symmetry:         { default: 1,     min: 1,     max: 16    },
-      colorHue:         { default: hue,   min: 0,     max: 360   }, // hue is in degress
+      // colorHue:         { default: hue,   min: 0,     max: 360   }, // hue is in degress
       saturation:       { default: 1,     min: 0,     max: 1.0   }, // saturation is 0 .. 1
       colorNoise:       { default: 0.1,   min: 0,     max: 1     },
       spray:            { default: 0,     min: 0,     max: 0.1   }, // percent of screen

@@ -152,7 +152,7 @@ class PalettePresets extends React.Component {
 class LayerPalette extends React.Component {
   render() {
 
-    const sliderKeys = ['size', 'age', 'flow', 'symmetry', 'pulse', 'spray', 'colorNoise', 'colorHue', 'saturation', 'accel', 'decay'];
+    const sliderKeys = ['size', 'age', 'flow', 'symmetry', 'pulse', 'spray', 'colorNoise', 'saturation', 'accel', 'decay']; // 'colorHue', 
 
     let self = this;
     let layer = self.props.layer;

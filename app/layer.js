@@ -237,6 +237,8 @@ class Layer {
 
     if (event.type == "mousedown") {
 
+      this.palette.randomizeColor();
+
       this.rgb = this.palette.getCurrentColor();
       
       this.vcr.recordEvent(eventPos, this.rgb);

@@ -1,0 +1,40 @@
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; }
+
+#app #ui {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  margin: 10px; }
+
+#glcanvas {
+  height: 100vh;
+  width: 100vw;
+  cursor: crosshair; }
+
+.parameter {
+  padding: 2px; }
+
+.parameter span.title {
+  color: white; }
+
+.layer {
+  color: white;
+  display: inline-block; }
+
+.layer.active {
+  color: yellow;
+  font-weight: bold; }
+
+.layer:hover {
+  color: blue; }
+
+.error {
+  color: red; }
+
+
+
+/*# sourceMappingURL=app.css.map*/

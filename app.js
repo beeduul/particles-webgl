@@ -30031,8 +30031,6 @@ var Layer = function () {
         txArr.push([]);
       }
 
-      var aspect = this.canvas.width / this.canvas.height;
-
       this.addAccumulator += this.getPaletteValue('flow') * (time.deltaTime / 1000);
 
       if (this.addAccumulator < 1) return;
@@ -30083,7 +30081,7 @@ var Layer = function () {
 
           var spray = this.getPaletteValue('spray');
           var angleOffset = Math.random() * Math.PI * 2.0;
-          var distanceFromCenter = 1; // Math.random();
+          var distanceFromCenter = Math.random();
           thisPart[0] = thisPart[0] / this.canvas.width * 2.0 - 1.0 + Math.cos(angleOffset) * spray * distanceFromCenter;
           thisPart[1] = thisPart[1] / this.canvas.height * -2.0 + 1.0 + Math.sin(angleOffset) * spray * distanceFromCenter;
 
@@ -30272,9 +30270,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var GLUtil = require('gl_util');
 
-var LARGEST_WIDTH_SUPPORTED_BY_CHROME = 16384; // largest texture width supported by chrome, 256 * 64; TODO -- runtime test for this for all platforms
-var SIMULATION_WIDTH = LARGEST_WIDTH_SUPPORTED_BY_CHROME;
-var SIMULATION_HEIGHT = 1;
+var SIMULATION_WIDTH = 1024; // 16384; // largest texture supported by chrome, 256 * 64; TODO
+var SIMULATION_HEIGHT = 1024;
 
 function createParticleUV() {
   var width = SIMULATION_WIDTH;
@@ -30295,6 +30292,8 @@ function createParticleUV() {
 }
 
 var _fsQuadBuffer;
+
+var lastPrintedNumParticles = 0;
 
 var GPUSimulation = function () {
   function GPUSimulation(simulation) {
@@ -30588,6 +30587,12 @@ var GPUSimulation = function () {
       this.num_particles += 1;
       if (this.num_particles > sim_width * sim_height) {
         this.num_particles = 0;
+        lastPrintedNumParticles = 0;
+      }
+
+      if (this.num_particles >= lastPrintedNumParticles + 10000) {
+        console.log(this.num_particles);
+        lastPrintedNumParticles = this.num_particles;
       }
     }
   }]);
@@ -31256,5 +31261,99 @@ require.alias("react/react.js", "react");process = require('process');require.re
   
 });})();require('___globals___');
 
+'use strict';
 
+/* jshint ignore:start */
+(function () {
+  var WebSocket = window.WebSocket || window.MozWebSocket;
+  var br = window.brunch = window.brunch || {};
+  var ar = br['auto-reload'] = br['auto-reload'] || {};
+  if (!WebSocket || ar.disabled) return;
+  if (window._ar) return;
+  window._ar = true;
+
+  var cacheBuster = function cacheBuster(url) {
+    var date = Math.round(Date.now() / 1000).toString();
+    url = url.replace(/(\&|\\?)cacheBuster=\d*/, '');
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'cacheBuster=' + date;
+  };
+
+  var browser = navigator.userAgent.toLowerCase();
+  var forceRepaint = ar.forceRepaint || browser.indexOf('chrome') > -1;
+
+  var reloaders = {
+    page: function page() {
+      window.location.reload(true);
+    },
+
+    stylesheet: function stylesheet() {
+      [].slice.call(document.querySelectorAll('link[rel=stylesheet]')).filter(function (link) {
+        var val = link.getAttribute('data-autoreload');
+        return link.href && val != 'false';
+      }).forEach(function (link) {
+        link.href = cacheBuster(link.href);
+      });
+
+      // Hack to force page repaint after 25ms.
+      if (forceRepaint) setTimeout(function () {
+        document.body.offsetHeight;
+      }, 25);
+    },
+
+    javascript: function javascript() {
+      var scripts = [].slice.call(document.querySelectorAll('script'));
+      var textScripts = scripts.map(function (script) {
+        return script.text;
+      }).filter(function (text) {
+        return text.length > 0;
+      });
+      var srcScripts = scripts.filter(function (script) {
+        return script.src;
+      });
+
+      var loaded = 0;
+      var all = srcScripts.length;
+      var onLoad = function onLoad() {
+        loaded = loaded + 1;
+        if (loaded === all) {
+          textScripts.forEach(function (script) {
+            eval(script);
+          });
+        }
+      };
+
+      srcScripts.forEach(function (script) {
+        var src = script.src;
+        script.remove();
+        var newScript = document.createElement('script');
+        newScript.src = cacheBuster(src);
+        newScript.async = true;
+        newScript.onload = onLoad;
+        document.head.appendChild(newScript);
+      });
+    }
+  };
+  var port = ar.port || 9485;
+  var host = br.server || window.location.hostname || 'localhost';
+
+  var connect = function connect() {
+    var connection = new WebSocket('ws://' + host + ':' + port);
+    connection.onmessage = function (event) {
+      if (ar.disabled) return;
+      var message = event.data;
+      var reloader = reloaders[message] || reloaders.page;
+      reloader();
+    };
+    connection.onerror = function () {
+      if (connection.readyState) connection.close();
+    };
+    connection.onclose = function () {
+      window.setTimeout(connect, 1000);
+    };
+  };
+  connect();
+})();
+/* jshint ignore:end */
+
+;
 //# sourceMappingURL=app.js.map

@@ -30270,8 +30270,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var GLUtil = require('gl_util');
 
-var SIMULATION_WIDTH = 1024; // 16384; // largest texture supported by chrome, 256 * 64; TODO
-var SIMULATION_HEIGHT = 1024;
+var SIMULATION_WIDTH = 16384; // largest texture supported by chrome, 256 * 64; TODO
+var SIMULATION_HEIGHT = 4;
 
 function createParticleUV() {
   var width = SIMULATION_WIDTH;
